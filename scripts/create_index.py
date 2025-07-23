@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from itertools import combinations
 
 print("Script starting ... ")
 
@@ -89,7 +90,7 @@ rti_by_by_industry = pd.read_csv('data/processed/rti_by_industry.csv')
 
 # Rename WIOA columns to human readable column names.
 data = data_10percent[columns].rename(columns=column_names)
-print(f"Initial data shape: {data.shape}")
+print(f"Data shape after initial load: {data.shape}")
 
 # Do not consider rows which are served by the by a youth funding stream.
 data = data[data["youth_funding_x"] != 1]
@@ -384,26 +385,26 @@ print(f"Data shape after constructing and normalizing response variables: {data.
 data["bin_r_cog_industry_y"] = pd.cut(
     data['diff_r_cog_industry_y'],
     bins=[-np.inf, 0, np.inf],
-    labels=["Loss / No Change", "Gain"]
-)
+    labels=[0, 1]
+).astype("Int64")
 
 data["bin_r_man_industry_y"] = pd.cut(
     data['diff_r_man_industry_y'],
     bins=[-np.inf, 0, np.inf],
-    labels=["Loss / No Change", "Gain"]
-)
+    labels=[0, 1]
+).astype("Int64")
 
 data["bin_offshor_industry_y"] = pd.cut(
     data['diff_offshor_industry_y'],
     bins=[-np.inf, 0, np.inf],
-    labels=["Loss / No Change", "Gain"]
-)
+    labels=[0, 1]
+).astype("Int64")
 
 data["bin_wages_mean_y"] = pd.cut(
     data["diff_wages_mean_y"],
     bins=[-np.inf, 0, np.inf],
-    labels=["Loss", "No Change / Gain"]
-)
+    labels=[0, 1]
+).astype("Int64")
 
 print(f"Data shape after binning response variables: {data.shape}")
 
@@ -435,5 +436,47 @@ def assign_tier(row):
 
 data["outcome_tier"] = data.apply(assign_tier, axis=1)
 print(f"Data shape after assigning outcome tier: {data.shape}")
+
+# Compute aggregated statistics for the index
+dimensions = [
+    'low_income_x',
+    'employment_status_x',
+    'received_training_x',
+    'race_ethnicity_x',
+    'sex_x',
+    'age_x',
+    'highest_education_level_x',
+    'training_service_type_1_x',
+]
+
+data = data.dropna(subset=dimensions)
+print(f"Data shape after dropping rows with na values in dimension columns: {data.shape}")
+
+
+# columns to aggregate
+metrics = ['bin_r_cog_industry_y', 'bin_r_man_industry_y', 'bin_offshor_industry_y', 'bin_wages_mean_y']  
+
+grouping_sets = [list(c) for i in range(1, len(dimensions) + 1) for c in combinations(dimensions, i)]
+
+aggregates = []
+
+isOutcomeTier2 = data['outcome_tier'] == "Tier 2"
+
+for group in grouping_sets:
+    grouped = data[isOutcomeTier2].groupby(group).agg({
+        'bin_r_cog_industry_y': ['mean', 'count'],
+        'bin_r_man_industry_y': ['mean', 'count'],
+        'bin_offshor_industry_y': ['mean', 'count'],
+        'bin_wages_mean_y': ['mean', 'count'],
+    }).reset_index()
+
+    # Store info about group level
+    grouped['__group_by__'] = ','.join(group)
+    aggregates.append(grouped)
+
+index_df = pd.concat(aggregates, ignore_index=True)
+
+index_df.to_csv("data/processed/index.csv", index=False)
+print(f"Data shape after saving index: {index_df.shape}")
 
 print("Script finished!")
