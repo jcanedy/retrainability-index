@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 
 '''
 # Retrainability Index
-v0.0.2
+v0.0.3
 
 The Retainability Index is composite metric designed to evaluate how effectively programs are helping workers access retraining, gain future-ready skills, and secure quality employment. 
 Built from WIOA performance data, the index highlights demographic differences in program outcomes to identify where retraining efforts are leading to positive retraining.
@@ -222,24 +222,23 @@ The sample is a subset and may not reflect all regional or program-specific nuan
 
 '''
 
-left, center, right = st.columns(3)
+col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
 
-left.metric(label="Percent of Participants", value=f"{100 * selected_rows / total_rows:0.1f}%")
-center.metric(label="Selected Participants (Sample)", value=f"{selected_rows:0.0f}")
-right.metric(label="All Participants (Sample)", value=f"{total_rows:0.0f}")
+isIndex = plot_df['Statistic'] == "index_y"
+index_df = plot_df[isIndex][["Group", "Value"]].set_index("Group")
+selectedIndexValue = index_df.loc["Selected Participants"]["Value"]
+allIndexValue = index_df.loc["All Participants"]["Value"]
+
+diffIndexValue = selectedIndexValue - allIndexValue
+col1.metric(label="Index", value=f"{selectedIndexValue:0.2f}", delta=f"{diffIndexValue:0.2f} vs. All Participants")
+
+col2.metric(label="Percent of Participants", value=f"{100 * selected_rows / total_rows:0.1f}%")
+col3.metric(label="Selected Participants (Sample)", value=f"{selected_rows:0.0f}")
+col4.metric(label="All Participants (Sample)", value=f"{total_rows:0.0f}")
 
 
-# fig = px.bar(plot_df, x="Statistic", y="Value", color="Group", barmode="group")
-
-
-# # Clamp x-axis
-# fig.update_xaxes(range=[-4, 4])
-
-# # Plot
-# st.plotly_chart(fig)
-
-all_plot_df = plot_df[plot_df["Group"] == "All Participants"]
-selected_plot_df = plot_df[plot_df["Group"] == "Selected Participants"]
+all_plot_df = plot_df[(plot_df["Group"] == "All Participants") & ~isIndex]
+selected_plot_df = plot_df[(plot_df["Group"] == "Selected Participants") & ~isIndex]
 
 # Merge the two dataframes on the Statistic column
 dumbbell_df = all_plot_df.merge(
