@@ -8,9 +8,33 @@ import plotly.graph_objects as go
 
 '''
 # Retrainability Index
+v0.0.2
 
-_A prototype._
+The Retainability Index is composite metric designed to evaluate how effectively programs are helping workers access retraining, gain future-ready skills, and secure quality employment. 
+Built from WIOA performance data, the index highlights demographic differences in program outcomes to identify where retraining efforts are leading to positive retraining.
 '''
+
+methodology_expander = st.expander("Methodology")
+
+with methodology_expander:
+    '''
+
+    These metrics capture changes in job characteristics at the industry level, comparing pre- and post-program outcomes. Each indicator is computed by aggregating data across occupations within an industry. 
+    Specifically, we use a composite measures of routine task intensity and offshorability derived from the occupational mix of each industry. 
+    The values are weighted by occupational employment shares to reflect the dominant task content and characteristics of each sector. 
+    All metrics are transformed so that higher values consistently indicate more desirable or positive changes post-program.
+
+    - **`bin_r_cog_industry_y mean`**: Represents the average change in cognitive routine task intensity, where higher values indicate a shift toward *less cognitively routine* (i.e., more cognitively complex) work post-program.
+
+    - **`bin_r_man_industry_y mean`**: Measures the average change in manual routine task intensity. Higher values reflect a movement away from *manual routine* work toward more varied or skilled tasks after the program.
+
+    - **`bin_offshor_industry_y mean`**: Captures the average change in offshorability. Higher values imply a shift toward *less offshorable* work — suggesting increased job embeddedness or resilience post-program.
+
+    - **`bin_wages_mean_y mean`**: Indicates the average change in wage levels. Higher values represent *increased wages* following the program.
+
+    - **`index_y`**: A composite indicator summarizing positive changes across routine intensity, offshorability, and wages. Higher values denote an *overall positive impact* of the program on job quality and task characteristics.
+
+    '''
 
 
 df = pd.read_csv("data/processed/index.csv", low_memory=False)
@@ -42,7 +66,19 @@ with st.expander("Index Configurations"):
         normalized_weights[3] * df["bin_wages_mean_y mean"]
     )
 
-    st.write("Normalized weights:", normalized_weights)
+    # Unpack weights
+    w1, w2, w3, w4 = normalized_weights
+
+    # Construct the LaTeX formula with actual weights
+    latex_formula = rf'''
+    \text{{Index}}_y = {w1:.2f} \cdot \overline{{r_{{\text{{cog}},y}}}} + 
+                    {w2:.2f} \cdot \overline{{r_{{\text{{man}},y}}}} + 
+                    {w3:.2f} \cdot \overline{{r_{{\text{{offshor}},y}}}} + 
+                    {w4:.2f} \cdot \overline{{w_{{\text{{mean}},y}}}}
+    '''
+
+    # Display the formula
+    st.latex(latex_formula)
 
 container = st.container(border=True)
 
@@ -180,11 +216,17 @@ plot_df = plot_df.melt(id_vars=["Group"],
                     value_name="Value")
 
 
+'''
+Based on your selections, the chart below compares these metrics to all participants in the 10% sample dataset. 
+The sample is a subset and may not reflect all regional or program-specific nuances of the full WIOA dataset.
+
+'''
+
 left, center, right = st.columns(3)
 
 left.metric(label="Percent of Participants", value=f"{100 * selected_rows / total_rows:0.1f}%")
-center.metric(label="Selected Participants", value=f"{selected_rows:0.0f}")
-right.metric(label="All Participants", value=f"{total_rows:0.0f}")
+center.metric(label="Selected Participants (Sample)", value=f"{selected_rows:0.0f}")
+right.metric(label="All Participants (Sample)", value=f"{total_rows:0.0f}")
 
 
 # fig = px.bar(plot_df, x="Statistic", y="Value", color="Group", barmode="group")
