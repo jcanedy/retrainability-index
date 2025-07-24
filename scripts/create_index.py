@@ -437,7 +437,7 @@ def assign_tier(row):
 data["outcome_tier"] = data.apply(assign_tier, axis=1)
 print(f"Data shape after assigning outcome tier: {data.shape}")
 
-# Compute aggregated statistics for the index
+# Define dimensions and metrics
 dimensions = [
     'low_income_x',
     'employment_status_x',
@@ -449,19 +449,20 @@ dimensions = [
     'training_service_type_1_x',
 ]
 
+metrics = ['bin_r_cog_industry_y', 'bin_r_man_industry_y', 'bin_offshor_industry_y', 'bin_wages_mean_y']
+
+# Clean data before aggregation
 data = data.dropna(subset=dimensions)
-print(f"Data shape after dropping rows with na values in dimension columns: {data.shape}")
 
+print(f"Data shape after dropping rows with NA in dimension columns: {data.shape}")
 
-# columns to aggregate
-metrics = ['bin_r_cog_industry_y', 'bin_r_man_industry_y', 'bin_offshor_industry_y', 'bin_wages_mean_y']  
-
-grouping_sets = [list(c) for i in range(1, len(dimensions) + 1) for c in combinations(dimensions, i)]
+# Create all combinations of dimensions from 1 to N
+grouping_sets = [list(c) for i in range(1, len(dimensions)+1) for c in combinations(dimensions, i)]
 
 aggregates = []
 
+# Grouped aggregations with rollup handling
 isOutcomeTier2 = data['outcome_tier'] == "Tier 2"
-
 for group in grouping_sets:
     grouped = data[isOutcomeTier2].groupby(group).agg({
         'bin_r_cog_industry_y': ['mean', 'count'],
@@ -470,10 +471,39 @@ for group in grouping_sets:
         'bin_wages_mean_y': ['mean', 'count'],
     }).reset_index()
 
-    # Store info about group level
-    grouped['__group_by__'] = ','.join(group)
+    # Add 'All' for dimensions not in current group
+    for dim in dimensions:
+        if dim not in group:
+            grouped[dim] = "All"
+
+    grouped['__groupby__'] = ','.join(group)
+    grouped.columns = [' '.join(c).strip() for c in grouped.columns]
     aggregates.append(grouped)
 
+# Grand total row (match schema exactly)
+agg = data[isOutcomeTier2].agg({
+    'bin_r_cog_industry_y': ['mean', 'count'],
+    'bin_r_man_industry_y': ['mean', 'count'],
+    'bin_offshor_industry_y': ['mean', 'count'],
+    'bin_wages_mean_y': ['mean', 'count'],
+})
+
+agg_row = agg.T.stack().to_frame().T
+agg_row.columns =  [f"{col} {stat}" for col, stat in agg_row.columns]
+
+# Add all dimension columns and group marker
+for dim in dimensions:
+    agg_row[dim] = "All"
+agg_row['__groupby__'] = 'All'
+
+# Reorder columns to match other groupings
+# Put dimensions + __groupby__ first, then the metric columns
+# column_order = dimensions + ['__groupby__'] + list(agg_row.columns)
+# agg_row = agg_row[column_order]
+
+aggregates.append(agg_row)
+
+# Concatenate all
 index_df = pd.concat(aggregates, ignore_index=True)
 
 index_df.to_csv("data/processed/index.csv", index=False)
