@@ -85,6 +85,7 @@ columns = column_names.keys()
 # Load preprocessed data.
 data_10percent = pd.read_csv('data/processed/wioa_data_10_percent.csv', low_memory=False)
 occupations = pd.read_csv('data/processed/occupations.csv')
+workforce_boards = pd.read_csv('data/processed/workforce_boards.csv')
 rti_by_occupation = pd.read_csv('data/processed/rti_by_occupation.csv')
 rti_by_by_industry = pd.read_csv('data/processed/rti_by_industry.csv')
 
