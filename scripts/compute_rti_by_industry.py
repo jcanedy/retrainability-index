@@ -56,5 +56,7 @@ rti_by_industry_code['industry_code'] = rti_by_industry_code['industry_code'].ap
 
 rti_by_industry_code = rti_by_industry_code.groupby(by=['industry_code'])[['r_cog_industry', 'r_man_industry', 'offshor_industry']].mean().reset_index()
 
+rti_by_industry_code = rti_by_industry_code.merge(matrix[['industry_code', 'industry_title']].drop_duplicates(), on='industry_code', how='left').dropna(subset=['industry_title'])
+
 rti_by_industry_code.to_csv("data/processed/rti_by_industry.csv", index=False)
 rti_by_occupation_code.to_csv("data/processed/rti_by_occupation.csv", index=False)

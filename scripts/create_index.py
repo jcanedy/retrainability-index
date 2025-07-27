@@ -322,6 +322,7 @@ data = data.merge(rti_by_by_industry, how="left", left_on="industry_code_x", rig
 
 data = data.rename(
     columns={
+        "industry_title": "industry_title_x",
         "r_cog_industry": "r_cog_industry_x",
         "r_man_industry": "r_man_industry_x",
         "offshor_industry": "offshor_industry_x"
@@ -337,6 +338,7 @@ data = data.merge(rti_by_by_industry, how="left", left_on="industry_code_y", rig
 
 data = data.rename(
     columns={
+        "industry_title": "industry_title_y",
         "r_cog_industry": "r_cog_industry_y",
         "r_man_industry": "r_man_industry_y",
         "offshor_industry": "offshor_industry_y"
@@ -466,6 +468,7 @@ dimensions = [
     'age_x',
     'highest_education_level_x',
     'training_service_type_1_x',
+    'industry_title_x'
 ]
 
 # Clean data before aggregation

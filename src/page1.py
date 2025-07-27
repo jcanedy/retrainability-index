@@ -121,6 +121,14 @@ with container:
             "Training Service Type",
             training_service_types
         )
+    '''
+    ### Prior Employment
+    '''
+    industry_titles = list(df["industry_title_x"].unique())
+    industry_title = st.selectbox(
+        "Industry Code",
+        industry_titles
+    )
 
 # Group data together
 isRaceEthnicity = df.race_ethnicity_x.isin([race_ethnicity])
@@ -131,6 +139,7 @@ isEmploymentStatus = df.employment_status_x.isin([employment_status])
 isAge = df.age_x.isin([age])
 isHighestEducationLevel = df.highest_education_level_x.isin([highest_education_level])
 isTrainingServiceType = df.training_service_type_1_x.isin([training_service_type])
+isIndustryTitle = df.industry_title_x.isin([industry_title])
 
 
 # Include All as a comparison group
@@ -142,6 +151,7 @@ isEmploymentStatusAll = df.employment_status_x == "All"
 isAgeAll = df.age_x == "All"
 isHighestEducationLevelAll = df.highest_education_level_x == "All"
 isTrainingServiceTypeAll = df.training_service_type_1_x == "All"
+isIndustryTitleAll = df.industry_title_x == "All"
 
 
 selected_df = df[(isRaceEthnicity 
@@ -151,7 +161,8 @@ selected_df = df[(isRaceEthnicity
                     & isEmploymentStatus
                     & isAge
                     & isHighestEducationLevel
-                    & isTrainingServiceType)
+                    & isTrainingServiceType
+                    & isIndustryTitle)
                     ]
 
 all_df = df[(isRaceEthnicityAll 
@@ -161,13 +172,14 @@ all_df = df[(isRaceEthnicityAll
                     & isEmploymentStatusAll
                     & isAgeAll
                     & isHighestEducationLevelAll
-                    & isTrainingServiceTypeAll)
+                    & isTrainingServiceTypeAll
+                    & isIndustryTitleAll)
                     ]
 
 
-selected_df["Group"] = "Selected Participants"
+selected_df.loc[:, "Group"] = "Selected Participants"
     
-all_df["Group"] = "All Participants"
+all_df.loc[:, "Group"] = "All Participants"
 
 selected_rows = selected_df["bin_wages_mean_y count"].sum()
 total_rows = all_df["bin_wages_mean_y count"].sum()
