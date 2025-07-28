@@ -53,10 +53,21 @@ matrix['offshor_industry'] = matrix['2023_percent_of_industry_norm'] * matrix['o
 rti_by_industry_code = matrix.groupby(['industry_code', 'industry_title'])[['r_cog_industry', 'r_man_industry', 'offshor_industry']].sum().reset_index()
 
 rti_by_industry_code['industry_code'] = rti_by_industry_code['industry_code'].apply(lambda x : x[:3] + '000')
+rti_by_industry_code['industry_code_prefix'] = rti_by_industry_code['industry_code'].apply(lambda x : x[:2] + '0000')
 
-rti_by_industry_code = rti_by_industry_code.groupby(by=['industry_code'])[['r_cog_industry', 'r_man_industry', 'offshor_industry']].mean().reset_index()
+rti_by_industry_code = rti_by_industry_code.groupby(by=['industry_code', 'industry_code_prefix'])[['r_cog_industry', 'r_man_industry', 'offshor_industry']].mean().reset_index()
 
-rti_by_industry_code = rti_by_industry_code.merge(matrix[['industry_code', 'industry_title']].drop_duplicates(), on='industry_code', how='left').dropna(subset=['industry_title'])
+rti_by_industry_code = (
+    rti_by_industry_code.merge(
+    matrix[['industry_code', 'industry_title']].drop_duplicates(), 
+    left_on='industry_code_prefix', right_on='industry_code', 
+    how='left')
+    .dropna(subset=['industry_title'])
+    .rename(columns={
+        "industry_code_x": "industry_code"
+    })
+    .drop(columns=["industry_code_y"])
+)
 
 rti_by_industry_code.to_csv("data/processed/rti_by_industry.csv", index=False)
 rti_by_occupation_code.to_csv("data/processed/rti_by_occupation.csv", index=False)

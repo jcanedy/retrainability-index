@@ -87,7 +87,9 @@ data_10percent = pd.read_csv('data/processed/wioa_data_10_percent.csv', low_memo
 occupations = pd.read_csv('data/processed/occupations.csv')
 workforce_boards = pd.read_csv('data/processed/workforce_boards.csv')
 rti_by_occupation = pd.read_csv('data/processed/rti_by_occupation.csv')
-rti_by_by_industry = pd.read_csv('data/processed/rti_by_industry.csv')
+rti_by_industry = pd.read_csv('data/processed/rti_by_industry.csv')
+
+rti_by_industry['industry_code'] = rti_by_industry['industry_code'].astype(str)
 
 # Rename WIOA columns to human readable column names.
 data = data_10percent[columns].rename(columns=column_names)
@@ -318,7 +320,7 @@ data['industry_code_y'] = data['industry_code_y'].apply(format_industry_code)
 print(f"Data shape after adding pre- and post-program industry codes: {data.shape}")
 
 # Join with industry-level rti for pre-program industry codes
-data = data.merge(rti_by_by_industry, how="left", left_on="industry_code_x", right_on="industry_code")
+data = data.merge(rti_by_industry, how="left", left_on="industry_code_x", right_on="industry_code")
 
 data = data.rename(
     columns={
@@ -334,7 +336,7 @@ data = data.drop(
 )
 
 # Join with industry-level rti for pre-program industry codes
-data = data.merge(rti_by_by_industry, how="left", left_on="industry_code_y", right_on="industry_code")
+data = data.merge(rti_by_industry, how="left", left_on="industry_code_y", right_on="industry_code")
 
 data = data.rename(
     columns={
