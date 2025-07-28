@@ -186,15 +186,23 @@ total_rows = all_df["bin_wages_mean_y count"].sum()
 
 plot_df = pd.concat([selected_df, all_df], ignore_index=True)
 
+plot_df = plot_df.rename(columns={
+    "bin_r_cog_industry_y mean": "Lower Routine Cognitive", 
+    "bin_r_man_industry_y mean": "Lower Routine Manual", 
+    "bin_offshor_industry_y mean": "Lower Offshorability",
+    "bin_wages_mean_y mean": "Higher Wage"
+})
 
 plot_df = plot_df.melt(id_vars=["Group"],
-                    value_vars=["bin_r_cog_industry_y mean", 
-                                "bin_r_man_industry_y mean", 
-                                "bin_offshor_industry_y mean",
-                                "bin_wages_mean_y mean",
+                    value_vars=["Lower Routine Cognitive", 
+                                "Lower Routine Manual", 
+                                "Lower Offshorability",
+                                "Higher Wage",
                                 "index_y"],
                     var_name="Statistic",
                     value_name="Value")
+
+
 
 
 '''
@@ -233,8 +241,8 @@ fig = go.Figure()
 # Add the dumbbell lines (connecting All to Selected)
 for _, row in dumbbell_df.iterrows():
     fig.add_trace(go.Scatter(
-        x=[row["Value_all"], row["Value_selected"]],
-        y=[row["Statistic"], row["Statistic"]],
+        y=[row["Value_all"], row["Value_selected"]],
+        x=[row["Statistic"], row["Statistic"]],
         mode="lines",
         line=dict(color="grey"),
         showlegend=False,
@@ -242,8 +250,8 @@ for _, row in dumbbell_df.iterrows():
 
 # Add the Selected Participants dots
 fig.add_trace(go.Scatter(
-    x=dumbbell_df["Value_selected"],
-    y=dumbbell_df["Statistic"],
+    y=dumbbell_df["Value_selected"],
+    x=dumbbell_df["Statistic"],
     mode="markers",
     name="Selected Participants",
     marker=dict(color="green", size=10)
@@ -251,8 +259,8 @@ fig.add_trace(go.Scatter(
 
 # Add the All Participants dots
 fig.add_trace(go.Scatter(
-    x=dumbbell_df["Value_all"],
-    y=dumbbell_df["Statistic"],
+    y=dumbbell_df["Value_all"],
+    x=dumbbell_df["Statistic"],
     mode="markers",
     name="All Participants",
     marker=dict(color="grey", size=10)
@@ -261,8 +269,8 @@ fig.add_trace(go.Scatter(
 
 fig.update_layout(
     title="All vs Selected Participants",
-    xaxis_title="Percent of Participants",
-    yaxis_title="Statistic",
+    yaxis_title="Percent of Participants",
+    xaxis_title="Statistic",
     template="simple_white"
 )
 
