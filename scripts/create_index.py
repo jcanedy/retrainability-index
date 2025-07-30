@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from itertools import combinations
+import polars as pl
 
 print("Script starting ... ")
 
