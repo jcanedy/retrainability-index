@@ -461,7 +461,7 @@ print(f"Data shape after assigning outcome tier: {data.shape}")
 dimensions = [
     'low_income_x', 'employment_status_x', 'received_training_x',
     'race_ethnicity_x', 'sex_x', 'age_x', 'highest_education_level_x',
-    'training_service_type_1_x', 'industry_title_x'
+    'industry_title_x', 'state_x'
 ]
 
 metrics = [
@@ -483,6 +483,64 @@ grouping_sets = [list(c) for i in range(1, len(dimensions)+1) for c in combinati
 
 # Filter to Tier 2 data only
 tier2_data = data.filter(pl.col("outcome_tier") == "Tier 2")
+
+def consolidate_multiple_columns(data, columns, min_percentage=0.02):
+    """Consolidate multiple columns at once, overwriting originals"""
+    
+    consolidated_data = data
+    consolidated_columns = []
+    non_consolidated_columns = []
+    
+    for column in columns:
+        # Skip if column is not string/categorical
+        if consolidated_data[column].dtype not in [pl.String, pl.Categorical]:
+            non_consolidated_columns.append(column)
+            print(f"{column}: skipped (not categorical)")
+            continue
+            
+        total_count = consolidated_data.height
+        value_counts = consolidated_data.select(pl.col(column).value_counts()).unnest(column)
+        
+        # Calculate percentages
+        value_counts = value_counts.with_columns(
+            (pl.col("count") / total_count).alias("percentage")
+        )
+        
+        # Keep categories above threshold
+        keep_categories = value_counts.filter(
+            pl.col("percentage") >= min_percentage
+        ).select(column).to_series().to_list()
+        
+        original_categories = value_counts.height
+        kept_categories = len(keep_categories)
+        
+        # Only consolidate if we're actually reducing categories
+        if kept_categories < original_categories:
+            # Overwrite original column with consolidated version
+            consolidated_data = consolidated_data.with_columns(
+                pl.when(pl.col(column).is_in(keep_categories))
+                .then(pl.col(column))
+                .otherwise(pl.lit("Other"))
+                .alias(column)  # Same name as original
+            )
+            consolidated_columns.append(column)
+            print(f"{column}: consolidated to {kept_categories} categories (from {original_categories})")
+        else:
+            # No consolidation needed
+            non_consolidated_columns.append(column)
+            print(f"{column}: no consolidation needed ({original_categories} categories)")
+    
+    return consolidated_data, consolidated_columns, non_consolidated_columns
+
+# Use it - much cleaner!
+tier2_data, consolidated_cols, non_consolidated_cols = consolidate_multiple_columns(
+    tier2_data, dimensions, min_percentage=0.02
+)
+
+print(f"Data shape after consolidating columns: {data.shape}")
+
+# Save data for separate analysis
+tier2_data.write_parquet("data/processed/wioa_data_tier2.parquet", compression="snappy")
 
 aggregates = []
 
@@ -539,97 +597,4 @@ index_df = pl.concat(aggregates)
 index_df.write_parquet("data/processed/index_tier2.parquet", compression="snappy")
 print(f"Data shape after saving index Tier 2: {index_df.shape}")
 
-
-# # Create Tier 1 Index
-# metrics = ['bin_r_cog_y', 'bin_r_man_y', 'bin_offshor_y', 'bin_wages_mean_y']
-
-# aggregates = []
-
-# # Grouped aggregations with rollup handling
-# isOutcomeTier1 = data['outcome_tier'] == "Tier 1"
-# for group in grouping_sets:
-#     grouped = data[isOutcomeTier1].groupby(group).agg({
-#         'bin_r_cog_y': ['mean', 'count'],
-#         'bin_r_man_y': ['mean', 'count'],
-#         'bin_offshor_y': ['mean', 'count'],
-#         'bin_wages_mean_y': ['mean', 'count'],
-#     }).reset_index()
-
-#     # Add 'All' for dimensions not in current group
-#     for dim in dimensions:
-#         if dim not in group:
-#             grouped[dim] = "All"
-
-#     grouped['__groupby__'] = ','.join(group)
-#     grouped.columns = [' '.join(c).strip() for c in grouped.columns]
-#     aggregates.append(grouped)
-
-# # Grand total row (match schema exactly)
-# agg = data[isOutcomeTier1].agg({
-#     'bin_r_cog_y': ['mean', 'count'],
-#     'bin_r_man_y': ['mean', 'count'],
-#     'bin_offshor_y': ['mean', 'count'],
-#     'bin_wages_mean_y': ['mean', 'count'],
-# })
-
-# agg_row = agg.T.stack().to_frame().T
-# agg_row.columns =  [f"{col} {stat}" for col, stat in agg_row.columns]
-
-# # Add all dimension columns and group marker
-# for dim in dimensions:
-#     agg_row[dim] = "All"
-# agg_row['__groupby__'] = 'All'
-
-# # Reorder columns to match other groupings
-# # Put dimensions + __groupby__ first, then the metric columns
-# # column_order = dimensions + ['__groupby__'] + list(agg_row.columns)
-# # agg_row = agg_row[column_order]
-
-# aggregates.append(agg_row)
-
-# # Concatenate all
-# index_df = pd.concat(aggregates, ignore_index=True)
-
-# index_df.to_csv("data/processed/index_tier1.csv", index=False)
-# print(f"Data shape after saving index Tier 1: {index_df.shape}")
-
 print("Script finished!")
-
-
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn.preprocessing import LabelEncoder
-# import numpy as np
-
-# # Prepare data for modeling (encode categorical variables)
-# tier2_data = data.filter(pl.col("outcome_tier") == "Tier 2").to_pandas()
-
-# # Encode categorical variables
-# encoders = {}
-# X = tier2_data[dimensions].copy()
-# for col in dimensions:
-#     if X[col].dtype == 'object':
-#         encoders[col] = LabelEncoder()
-#         X[col] = encoders[col].fit_transform(X[col].astype(str))
-
-# # For each outcome variable, get feature importance
-# outcomes = ['bin_r_cog_industry_y', 'bin_r_man_industry_y', 'bin_offshor_industry_y', 'bin_wages_mean_y']
-
-# importance_scores = {}
-# for outcome in outcomes:
-#     y = tier2_data[outcome].dropna()
-#     X_clean = X.loc[y.index]
-    
-#     rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
-#     rf.fit(X_clean, y)
-    
-#     importance_scores[outcome] = dict(zip(dimensions, rf.feature_importances_))
-
-# # Average importance across all outcomes
-# avg_importance = {dim: np.mean([importance_scores[outcome][dim] for outcome in outcomes]) 
-#                   for dim in dimensions}
-
-# # Sort by importance
-# sorted_dims = sorted(avg_importance.items(), key=lambda x: x[1], reverse=True)
-# print("Dimension importance rankings:")
-# for dim, score in sorted_dims:
-#     print(f"{dim}: {score:.4f}")
