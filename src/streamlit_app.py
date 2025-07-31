@@ -11,7 +11,7 @@ import operator
 # Retrainability Index
 v0.0.4 _(research prototpye)_
 
-_Author(s): [Jordan Canedy](https://github.com/jcanedy)_
+_Author(s): Jordan Canedy-Specht [LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy)_
 
 _Code Repository: <https://github.com/jcanedy/retainability-index>_
 
