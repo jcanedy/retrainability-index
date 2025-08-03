@@ -6,6 +6,9 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    git \
+    git-lfs \
+    && git lfs install \
     build-essential \
     libpq-dev \
     gcc \
@@ -13,6 +16,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
+
+# Pull LFS files
+git lfs pull --include="data/processed/index_tier2.parquet"
 
 # Copy application code
 COPY app/ ./app/
