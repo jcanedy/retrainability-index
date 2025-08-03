@@ -21,7 +21,7 @@ COPY app/ ./app/
 COPY data/processed/index_tier2.parquet ./data/processed/
 
 # Install Python dependencies
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r app/requirements.txt
 
 # Expose the port Streamlit will run on
 EXPOSE 8080
