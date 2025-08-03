@@ -1,15 +1,16 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import polars as pl
 from functools import reduce
 import operator
 
+
 '''
 # Retrainability Index
-v0.0.4 _(research prototpye)_
+v0.0.5 _(research prototpye)_
 
 _Author(s): Jordan Canedy-Specht [LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy)_
 
@@ -23,6 +24,9 @@ As a proof of concept, the index also highlights demographic differences in outc
 '''
 
 df_lazy = pl.scan_parquet("data/processed/index_tier2.parquet")
+
+
+#TODO(@jcanedy27): Move weight calculation to `create_index.py`
 
 weights = np.array([0.5, 0.25, 0.25])
 
@@ -216,14 +220,14 @@ result = (
     .with_columns([
         # Calculate sums for counts
         pl.when(pl.col("is_selected"))
-        .then(pl.col("bin_wages_mean_y count"))
+        .then(pl.col("count"))
         .otherwise(0)
         .sum()
         .over(pl.lit(1))  # Window over entire dataset
         .alias("selected_count_sum"),
         
         pl.when(pl.col("is_all"))
-        .then(pl.col("bin_wages_mean_y count"))
+        .then(pl.col("count"))
         .otherwise(0)
         .sum()
         .over(pl.lit(1))  # Window over entire dataset
@@ -241,10 +245,26 @@ result = (
     .rename({
         "bin_r_cog_industry_y mean": "Higher Routine Cognitive Tasks",
         "bin_r_man_industry_y mean": "Higher Routine Manual Tasks", 
-        "bin_wages_mean_y mean": "Higher Mean Wages"
+        "bin_wages_mean_y mean": "Higher Mean Wages",
+
+        "diff_r_cog_industry_y median": "Median Routine Cognitive Tasks",
+        "diff_r_cog_industry_y 25th": "25th Routine Cognitive Tasks",
+        "diff_r_cog_industry_y 75th": "75th Routine Cognitive Tasks",
+
+        "diff_r_man_industry_y median": "Median Routine Manual Tasks",
+        "diff_r_man_industry_y 25th": "25th Routine Manual Tasks",
+        "diff_r_man_industry_y 75th": "75th Routine Manual Tasks",
+
+        "diff_wages_mean_y median": "Median Mean Wages",
+        "diff_wages_mean_y 25th": "25th Mean Wages",
+        "diff_wages_mean_y 75th": "75th Mean Wages",
     })
     .unpivot(
-        on=["Higher Routine Cognitive Tasks", "Higher Routine Manual Tasks", "Higher Mean Wages", "index_y"],
+        on=["Higher Routine Cognitive Tasks", "Higher Routine Manual Tasks", "Higher Mean Wages",
+            "Median Routine Cognitive Tasks", "Median Routine Manual Tasks" , "Median Mean Wages",
+            "25th Routine Cognitive Tasks", "25th Routine Manual Tasks" , "25th Mean Wages",
+            "75th Routine Cognitive Tasks", "75th Routine Manual Tasks" , "75th Mean Wages",
+            "index_y"],
         index=["Group", "selected_count_sum", "all_count_sum"],
         variable_name="Statistic",
         value_name="Value"
@@ -350,6 +370,8 @@ with tab1:
     is_index = plot_df['Statistic'] == "index_y"
     index_df = plot_df[is_index][["Group", "Value"]].set_index("Group")
 
+    is_quantile = plot_df['Statistic'].str.startswith(("25th", "Median", "75th"))
+
     is_all_selected = all(value == "All" for value in selections.values())
     selected_index = index_df["Value"].get("Selected Participants")
     all_index = index_df["Value"].get("All Participants")
@@ -394,7 +416,7 @@ with tab1:
 
     # --- Dumbbell Chart ---
     fig = go.Figure()
-    non_index_df = plot_df[~is_index]
+    non_index_df = plot_df[~is_index & ~is_quantile]
     pivoted_df = non_index_df.pivot(index="Statistic", columns="Group", values="Value")
 
     for i, stat in enumerate(pivoted_df.index):
@@ -425,7 +447,7 @@ with tab1:
 
     fig.update_layout(
         title=dict(
-            text="Participant Outcome Differences by Subgroup Selection",
+            text="Share of Participants with Increases in Wages and Routine Task Intensity by Subgroup",
             x=0.5,                  # 0.5 = center
             xanchor="center",
             font=dict(size=18)
@@ -450,9 +472,88 @@ with tab1:
 
     st.plotly_chart(fig)
 
+    # --- Box Chart ---
+    # .pivot_table(index="Group", columns=["Statistic"], values="Value")
+    quantiles_df = plot_df[is_quantile].set_index("Group").pivot_table(index="Statistic", columns="Group", values="Value")
+
+    is_median = quantiles_df.index.str.startswith("Median")
+    is_q1 = quantiles_df.index.str.startswith("25th")
+    is_q3 = quantiles_df.index.str.startswith("75th")
+
+    median = quantiles_df[is_median]
+    q1 = quantiles_df[is_q1]
+    q3 = quantiles_df[is_q3]
+
+    # Define subplot titles (same order as columns in median/q1/q3)
+    subplot_titles = ['Mean Wages', 'Routine Cognitive Tasks', 'Routine Manual Tasks']
+
+    # Use group names from columns
+    groups = median.columns.tolist()
+
+    # Define colors for consistency
+    if len(groups) == 2:
+        colors = {
+            groups[0]: "gray",
+            groups[1]: "green"
+        }
+    else:
+        colors = {
+            groups[0]: "gray",
+        }
+
+    # Create subplots
+    fig = make_subplots(rows=1, cols=3, subplot_titles=subplot_titles)
+
+    # Loop over each subplot (indexed 0 to 2)
+    for i, title in enumerate(subplot_titles):
+        for group in groups:
+            fig.add_trace(
+                go.Box(
+                    q1=[q1.loc[q1.index.str.contains(title), group].values[0]],
+                    median=[median.loc[median.index.str.contains(title), group].values[0]],
+                    q3=[q3.loc[q3.index.str.contains(title), group].values[0]],
+                    name=group,
+                    marker_color=colors[group],
+                    boxpoints=False,
+                    showlegend=(i == 0),  # Show legend only in first column
+                ),
+                row=1, col=i+1
+            )
+
+    fig.update_xaxes(showticklabels=False)
+
+    # Format layout
+    fig.update_layout(
+        title=dict(
+            text="Outcome Differences for Selected Participants: Wages and Routine Task Intensity",
+            x=0.5,                  # 0.5 = center
+            xanchor="center",
+            font=dict(size=18)
+        ),
+        boxmode='group',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.3,
+            xanchor="center",
+            x=0.5,
+            title=None,
+            traceorder="normal",
+            font=dict(size=12),
+            itemsizing="constant"
+        )
+    )
+
+
+    st.plotly_chart(fig)
+
+
 with tab3:
     """
-        **v0.0.4 (31.7.2025)**
+        **v0.0.5 (02.08.2025)**
+        - Added box plot figure to capture magnitude of pre- and post-program changes in wages, routine cognitive tasks, and routine manual tasks.
+        
+        **v0.0.4 (31.07.2025)**
         - Modified index and subindex calculation (see Methodology for additional details).
         - Added consolidation to demographic selectors, grouping attributes with low participant counts into 'Other'.
         - Added `State` selector.
@@ -461,4 +562,3 @@ with tab3:
     """
 
     
-
