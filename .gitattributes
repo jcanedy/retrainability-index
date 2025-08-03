@@ -1,1 +1,0 @@
-data/processed/index_tier2.parquet filter=lfs diff=lfs merge=lfs -text
