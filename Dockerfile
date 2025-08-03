@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Pull LFS files
-git lfs pull --include="data/processed/index_tier2.parquet"
+RUN git lfs pull --include="data/processed/index_tier2.parquet"
 
 # Copy application code
 COPY app/ ./app/
