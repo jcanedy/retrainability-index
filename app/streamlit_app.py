@@ -23,7 +23,7 @@ The index incorporates measures of routine task intensity (RTI) based on the tas
 As a proof of concept, the index also highlights demographic differences in outcomes. Going forward, we aim to expand the Retainability Index deeply, by incorporating additional outcome variables such as job tenure, benefits, and occupational mobility; and broadly, by adapting the methodology for use in other countries as comparable labor and training data become available.
 '''
 
-df_lazy = pl.scan_parquet("cloud/storage/processed/index_tier2.parquet")
+df_lazy = pl.scan_parquet("/cloud/storage/processed/index_tier2.parquet")
 
 
 #TODO(@jcanedy27): Move weight calculation to `create_index.py`
