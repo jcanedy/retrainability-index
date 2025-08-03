@@ -413,6 +413,9 @@ data = data.with_columns(df_normalized)
 
 print(f"Data shape after constructing and normalizing response variables: {data.shape}")
 
+
+# Create indicator variables for pre- and post-program differences in 
+# routine cognitive, routine manual, offshorability, and wages
 data = data.with_columns([
     # 1 if routine cognitive tasks (strictly) increase
     (pl.col("diff_r_cog_industry_y") >= 0).cast(pl.Int64).alias("bin_r_cog_industry_y"), 
@@ -464,15 +467,28 @@ dimensions = [
     'industry_title_x', 'state_x'
 ]
 
+#TODO(jcanedy27@): Consolidate count variables to a single column
 metrics = [
-    "bin_r_cog_industry_y mean", "bin_r_cog_industry_y count",
-    "bin_r_man_industry_y mean", "bin_r_man_industry_y count", 
-    "bin_offshor_industry_y mean", "bin_offshor_industry_y count",
-    "bin_wages_mean_y mean", "bin_wages_mean_y count"
+    "bin_r_cog_industry_y mean",
+    "bin_r_man_industry_y mean",
+    "bin_offshor_industry_y mean",
+    "bin_wages_mean_y mean",
+    "diff_r_cog_industry_y median",
+    "diff_r_cog_industry_y 25th",
+    "diff_r_cog_industry_y 75th",
+    "diff_r_man_industry_y median",
+    "diff_r_man_industry_y 25th",
+    "diff_r_man_industry_y 75th",
+    "diff_offshor_industry_y median",
+    "diff_offshor_industry_y 25th",
+    "diff_offshor_industry_y 75th",
+    "diff_wages_mean_y median",
+    "diff_wages_mean_y 25th",
+    "diff_wages_mean_y 75th",
+    "count",
 ]
 
 column_order = dimensions + metrics + ["__groupby__"]
-
 
 # Clean data - drop rows with nulls in any dimension column
 data = data.drop_nulls(subset=dimensions)
@@ -484,7 +500,7 @@ grouping_sets = [list(c) for i in range(1, len(dimensions)+1) for c in combinati
 # Filter to Tier 2 data only
 tier2_data = data.filter(pl.col("outcome_tier") == "Tier 2")
 
-def consolidate_multiple_columns(data, columns, min_percentage=0.02):
+def consolidate_multiple_columns(data, columns, min_percentage=0.05):
     """Consolidate multiple columns at once, overwriting originals"""
     
     consolidated_data = data
@@ -544,19 +560,35 @@ tier2_data.write_parquet("data/processed/wioa_data_tier2.parquet", compression="
 
 aggregates = []
 
+aggregations = [
+    pl.col("bin_r_cog_industry_y").mean().alias("bin_r_cog_industry_y mean"),
+    pl.col("bin_r_man_industry_y").mean().alias("bin_r_man_industry_y mean"),
+    pl.col("bin_offshor_industry_y").mean().alias("bin_offshor_industry_y mean"),
+    pl.col("bin_wages_mean_y").mean().alias("bin_wages_mean_y mean"),
+
+    pl.col("diff_r_cog_industry_y").median().alias("diff_r_cog_industry_y median"),
+    pl.col("diff_r_cog_industry_y").quantile(0.25, interpolation="linear").alias("diff_r_cog_industry_y 25th"),
+    pl.col("diff_r_cog_industry_y").quantile(0.75, interpolation="linear").alias("diff_r_cog_industry_y 75th"),
+
+    pl.col("diff_r_man_industry_y").median().alias("diff_r_man_industry_y median"),
+    pl.col("diff_r_man_industry_y").quantile(0.25, interpolation="linear").alias("diff_r_man_industry_y 25th"),
+    pl.col("diff_r_man_industry_y").quantile(0.75, interpolation="linear").alias("diff_r_man_industry_y 75th"),
+
+    pl.col("diff_offshor_industry_y").median().alias("diff_offshor_industry_y median"),
+    pl.col("diff_offshor_industry_y").quantile(0.25, interpolation="linear").alias("diff_offshor_industry_y 25th"),
+    pl.col("diff_offshor_industry_y").quantile(0.75, interpolation="linear").alias("diff_offshor_industry_y 75th"),
+
+    pl.col("diff_wages_mean_y").median().alias("diff_wages_mean_y median"),
+    pl.col("diff_wages_mean_y").quantile(0.25, interpolation="linear").alias("diff_wages_mean_y 25th"),
+    pl.col("diff_wages_mean_y").quantile(0.75, interpolation="linear").alias("diff_wages_mean_y 75th"),
+
+    pl.len().alias("count"),
+]
+
 # Process each grouping combination
 for group in grouping_sets:
     # Aggregate by current group
-    grouped = tier2_data.group_by(group).agg([
-        pl.col("bin_r_cog_industry_y").mean().alias("bin_r_cog_industry_y mean"),
-        pl.col("bin_r_cog_industry_y").count().alias("bin_r_cog_industry_y count"),
-        pl.col("bin_r_man_industry_y").mean().alias("bin_r_man_industry_y mean"),
-        pl.col("bin_r_man_industry_y").count().alias("bin_r_man_industry_y count"),
-        pl.col("bin_offshor_industry_y").mean().alias("bin_offshor_industry_y mean"),
-        pl.col("bin_offshor_industry_y").count().alias("bin_offshor_industry_y count"),
-        pl.col("bin_wages_mean_y").mean().alias("bin_wages_mean_y mean"),
-        pl.col("bin_wages_mean_y").count().alias("bin_wages_mean_y count"),
-    ])
+    grouped = tier2_data.group_by(group).agg(aggregations)
     
     # Add "All" for dimensions not in current group
     for dim in dimensions:
@@ -571,16 +603,7 @@ for group in grouping_sets:
     aggregates.append(grouped)
 
 # Grand total row - aggregate all Tier 2 data
-grand_total = tier2_data.select([
-    pl.col("bin_r_cog_industry_y").mean().alias("bin_r_cog_industry_y mean"),
-    pl.col("bin_r_cog_industry_y").count().alias("bin_r_cog_industry_y count"),
-    pl.col("bin_r_man_industry_y").mean().alias("bin_r_man_industry_y mean"),
-    pl.col("bin_r_man_industry_y").count().alias("bin_r_man_industry_y count"),
-    pl.col("bin_offshor_industry_y").mean().alias("bin_offshor_industry_y mean"),
-    pl.col("bin_offshor_industry_y").count().alias("bin_offshor_industry_y count"),
-    pl.col("bin_wages_mean_y").mean().alias("bin_wages_mean_y mean"),
-    pl.col("bin_wages_mean_y").count().alias("bin_wages_mean_y count"),
-])
+grand_total = tier2_data.select(aggregations)
 
 # Add all dimension columns as "All" and groupby marker
 for dim in dimensions:
@@ -594,7 +617,7 @@ aggregates.append(grand_total)
 # Combine all aggregations
 index_df = pl.concat(aggregates)
 
-index_df.write_parquet("data/processed/index_tier2.parquet", compression="snappy")
+index_df.write_parquet("data/processed/index_tier2.parquet", compression="zstd")
 print(f"Data shape after saving index Tier 2: {index_df.shape}")
 
 print("Script finished!")
