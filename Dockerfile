@@ -4,9 +4,19 @@ FROM python:3.9-slim
 # Set working directory inside the container
 WORKDIR /app
 
-# Install system dependencies
+# Install required system dependencies for Python packages
 RUN apt-get update && apt-get install -y \
     build-essential \
+    python3-dev \
+    libffi-dev \
+    libssl-dev \
+    libpq-dev \
+    liblzma-dev \
+    zlib1g-dev \
+    libfreetype6-dev \
+    pkg-config \
+    gfortran \
+    libopenblas-dev \
     curl \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
