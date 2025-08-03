@@ -14,7 +14,7 @@ v0.0.5 _(research prototpye)_
 
 _Author(s): Jordan Canedy-Specht [LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy)_
 
-_Code Repository: <https://github.com/jcanedy/retainability-index>_
+_Code Repository: <https://github.com/jcanedy/retrainability-index>_
 
 The Retainability Index is a composite metric designed to evaluate how effectively workforce programs help participants access retraining, develop future-ready skills, and secure quality employment. This research prototype is built using [data from the Workforce Innovation and Opportunity Act (WIOA) program](https://www.dol.gov/agencies/eta/performance)—the U.S. Department of Labor’s flagship workforce development system. The WIOA dataset includes individual-level records for millions of participants in adult, dislocated worker, and youth programs, capturing demographics, services received, and employment and wage outcomes before and after program exit.
 
@@ -23,7 +23,7 @@ The index incorporates measures of routine task intensity (RTI) based on the tas
 As a proof of concept, the index also highlights demographic differences in outcomes. Going forward, we aim to expand the Retainability Index deeply, by incorporating additional outcome variables such as job tenure, benefits, and occupational mobility; and broadly, by adapting the methodology for use in other countries as comparable labor and training data become available.
 '''
 
-df_lazy = pl.scan_parquet("data/processed/index_tier2.parquet")
+df_lazy = pl.scan_parquet("cloud/storage/processed/index_tier2.parquet")
 
 
 #TODO(@jcanedy27): Move weight calculation to `create_index.py`
