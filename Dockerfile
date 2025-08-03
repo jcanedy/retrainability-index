@@ -17,9 +17,6 @@ RUN apt-get update && apt-get install -y \
 # Copy application code
 COPY app/ ./app/
 
-# Copy required data file
-COPY cloud/storage/processed/index_tier2.parquet ./storage/processed/
-
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r app/requirements.txt
 
