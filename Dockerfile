@@ -17,14 +17,14 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
-# Pull LFS files
-RUN git lfs pull --include="data/processed/index_tier2.parquet"
-
 # Copy application code
 COPY app/ ./app/
 
 # Copy required data file
 COPY data/processed/index_tier2.parquet ./data/processed/
+
+# Pull LFS files
+RUN git lfs pull --include="data/processed/index_tier2.parquet"
 
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r app/requirements.txt
