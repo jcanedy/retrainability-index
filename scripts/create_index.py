@@ -84,11 +84,11 @@ column_names = {
 columns = column_names.keys()
 
 # Load preprocessed data.
-data = pl.read_parquet("data/processed/wioa_data.parquet")
-occupations = pl.read_csv('data/processed/occupations.csv')
-rti_by_occupation = pl.read_csv('data/processed/rti_by_occupation.csv')
-rti_by_industry = pl.read_csv('data/processed/rti_by_industry.csv')
-workforce_boards = pd.read_csv('data/processed/workforce_boards.csv')
+data = pl.read_parquet("cloud/storage/processed/wioa_data.parquet")
+occupations = pl.read_csv('cloud/storage/processed/occupations.csv')
+rti_by_occupation = pl.read_csv('cloud/storage/processed/rti_by_occupation.csv')
+rti_by_industry = pl.read_csv('cloud/storage/processed/rti_by_industry.csv')
+workforce_boards = pd.read_csv('cloud/storage/processed/workforce_boards.csv')
 
 #TODO(jcanedy27@gmail.com): Move to `compute_rti_by_industry.py`.
 # Recast to string
@@ -594,9 +594,6 @@ for group in grouping_sets:
     for dim in dimensions:
         if dim not in group:
             grouped = grouped.with_columns(pl.lit("All").alias(dim))
-    
-    # Add groupby identifier
-    grouped = grouped.with_columns(pl.lit(','.join(group)).alias("__groupby__"))
 
     # Reorder columns to match final schema
     grouped = grouped.select(column_order)
@@ -608,7 +605,6 @@ grand_total = tier2_data.select(aggregations)
 # Add all dimension columns as "All" and groupby marker
 for dim in dimensions:
     grand_total = grand_total.with_columns(pl.lit("All").alias(dim))
-grand_total = grand_total.with_columns(pl.lit("All").alias("__groupby__"))
 
 # Reorder grand total columns to match schema
 grand_total = grand_total.select(column_order)
@@ -617,7 +613,11 @@ aggregates.append(grand_total)
 # Combine all aggregations
 index_df = pl.concat(aggregates)
 
-index_df.write_parquet("data/processed/index_tier2.parquet", compression="zstd")
+index_df = index_df.with_columns([
+    pl.col(c).cast(pl.Categorical) for c in dimensions
+])
+
+index_df.write_parquet("cloud/storage/processed/index_tier2.parquet", compression="zstd")
 print(f"Data shape after saving index Tier 2: {index_df.shape}")
 
 print("Script finished!")

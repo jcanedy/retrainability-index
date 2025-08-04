@@ -1,9 +1,11 @@
-import streamlit as st
-import pandas as pd
+from google.cloud import bigquery
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import polars as pl
+import streamlit as st
+
 from functools import reduce
 import operator
 
@@ -23,28 +25,52 @@ The index incorporates measures of routine task intensity (RTI) based on the tas
 As a proof of concept, the index also highlights demographic differences in outcomes. Going forward, we aim to expand the Retainability Index deeply, by incorporating additional outcome variables such as job tenure, benefits, and occupational mobility; and broadly, by adapting the methodology for use in other countries as comparable labor and training data become available.
 '''
 
-df_lazy = pl.scan_parquet("/cloud/storage/processed/index_tier2.parquet")
+# df_lazy = pl.scan_parquet("/cloud/storage/processed/index_tier2.parquet")
+
+@st.cache_data(ttl=600)
+def get_unique_values_for_columns(columns: list[str]) -> dict:
+    # Build SELECT clause dynamically
+    select_clauses = [
+        f"ARRAY_AGG(DISTINCT {col} ORDER BY {col}) AS {col}" for col in columns
+    ]
+    select_sql = ",\n  ".join(select_clauses)
+
+    query = f"""
+        SELECT
+          {select_sql}
+        FROM `retraining-index.processed.index_tier2`
+    """
+
+    client = bigquery.Client()
+    df = client.query(query).to_dataframe()
+
+    # The result will be a single-row DataFrame with arrays as columns
+    result = {col: df[col][0] for col in columns}
+    return result
 
 
-#TODO(@jcanedy27): Move weight calculation to `create_index.py`
+@st.cache_data(ttl=120)
+def get_single_row(filters: dict):
+    where_clauses = []
+    parameters = []
 
-weights = np.array([0.5, 0.25, 0.25])
+    for key, value in filters.items():
+        if value:
+            where_clauses.append(f"{key} = @{key}")
+            parameters.append(bigquery.ScalarQueryParameter(key, "STRING", value))
 
-# Unpack weights
-w1, w2, w3 = weights
+    where_sql = " AND ".join(where_clauses) or "TRUE"
 
-# Use normalized weights
-df_lazy = df_lazy.with_columns([
-    # Center and rescale to [-1, 1], then flip sign for routine vars
-    (-2 * (pl.col("bin_r_cog_industry_y mean") - 0.5)).alias("r_cog_adj"),
-    (-2 * (pl.col("bin_r_man_industry_y mean") - 0.5)).alias("r_man_adj"),
-    ( 2 * (pl.col("bin_wages_mean_y mean")     - 0.5)).alias("wages_adj")
-]).with_columns([
-    # Compute final index
-    (w1 * pl.col("r_cog_adj") +
-     w2 * pl.col("r_man_adj") +
-     w3 * pl.col("wages_adj")).alias("index_y")
-])
+    query = f"""
+        SELECT *
+        FROM `retraining-index.processed.index_tier2`
+        WHERE {where_sql}
+        LIMIT 1
+    """
+
+    client = bigquery.Client()
+    job_config = bigquery.QueryJobConfig(query_parameters=parameters)
+    return client.query(query, job_config=job_config).to_dataframe()
 
 # Define mapping from input column names to output variable names with '_options' suffix
 columns = {
@@ -59,28 +85,17 @@ columns = {
     "industry_title_x": "industry_title_options",
 }
 
-# Lazily compute unique values per column
-unique_lazyframes = {
-    out_name: df_lazy.select(pl.col(col)).unique()
-    for col, out_name in columns.items()
-}
-
-# Materialize and extract unique values into lists
-unique_values = {
-    out_name: lf.collect().get_column(col).to_list()
-    for (col, out_name), lf in zip(columns.items(), unique_lazyframes.values())
-}
-
-race_ethnicity_options = unique_values["race_ethnicity_options"]
-sex_options = unique_values["sex_options"]
-age_options = unique_values["age_options"]
-highest_education_level_options = unique_values["highest_education_level_options"]
-low_income_options = unique_values["low_income_options"]
-employment_status_options = unique_values["employment_status_options"]
-received_training_options = unique_values["received_training_options"]
-state_options = unique_values["state_options"]
-industry_title_options = unique_values["industry_title_options"]
-
+column_options = get_unique_values_for_columns([
+    "race_ethnicity_x",
+    "sex_x",
+    "age_x",
+    "highest_education_level_x",
+    "low_income_x",
+    "employment_status_x",
+    "received_training_x",
+    "state_x",
+    "industry_title_x"
+])
 
 def sort_with_all_other(options, custom_order=None):
     options_set = set(options)
@@ -110,7 +125,7 @@ age_custom_order = [
     "55 to 64 years",
     "65 to 84 years"
 ]
-age_options = sort_with_all_other(age_options, age_custom_order)
+age_options = sort_with_all_other(column_options["age_x"], age_custom_order)
 
 # Use custom sort for education
 education_custom_order = [
@@ -123,16 +138,16 @@ education_custom_order = [
     "Attained a Bachelor's degree",
     "Attained a degree beyond a Bachelor's degree"
 ]
-highest_education_level_options = sort_with_all_other(highest_education_level_options, education_custom_order)
+highest_education_level_options = sort_with_all_other(column_options["highest_education_level_x"], education_custom_order)
 
 # Apply default sort (alphabetical + All/Other positioning) to all others
-race_ethnicity_options = sort_with_all_other(race_ethnicity_options)
-sex_options = sort_with_all_other(sex_options)
-low_income_options = sort_with_all_other(low_income_options)
-employment_status_options = sort_with_all_other(employment_status_options)
-received_training_options = sort_with_all_other(received_training_options)
-state_options = sort_with_all_other(state_options)
-industry_title_options = sort_with_all_other(industry_title_options)
+race_ethnicity_options = sort_with_all_other(column_options["race_ethnicity_x"])
+sex_options = sort_with_all_other(column_options["sex_x"])
+low_income_options = sort_with_all_other(column_options["low_income_x"])
+employment_status_options = sort_with_all_other(column_options["employment_status_x"])
+received_training_options = sort_with_all_other(column_options["received_training_x"])
+state_options = sort_with_all_other(column_options["state_x"])
+industry_title_options = sort_with_all_other(column_options["industry_title_x"])
 
 
 # Config: field name -> label for display
@@ -196,53 +211,55 @@ with st.sidebar:
         "Industry Code", options_lookup["industry_title_x"]
     )
 
+all = {
+    "race_ethnicity_x":"All",
+    "sex_x":"All","age_x":"All",
+    "highest_education_level_x":"All",
+    "low_income_x":"All",
+    "employment_status_x":"All",
+    "state_x":"All",
+    "received_training_x":
+    "All","industry_title_x":"All"
+}
 
-# Build combined expression using &
-selected_filter = reduce(
-    operator.and_,
-    [pl.col(field).is_in([value]) for field, value in selections.items()]
+results_all = get_single_row(all)
+results_all["Group"] = "All Participants"
+
+results_selections = get_single_row(selections)
+results_selections["Group"] = "Selected Participants"
+
+results = pd.concat([results_all, results_selections], ignore_index=True)
+
+#TODO(@jcanedy27): Move weight calculation to `create_index.py`
+
+weights = np.array([0.25, 0.25, 0.5])
+
+# Unpack weights
+w1, w2, w3 = weights
+
+results["r_cog_adj"] = (-2 * results["bin_r_cog_industry_y mean"] - 0.5)
+results["r_man_adj"] = (-2 * results["bin_r_man_industry_y mean"] - 0.5)
+results["wages_mean_adj"] = (2 * results["bin_wages_mean_y mean"] - 0.5)
+
+results["Index"] = (
+    w1 * results["r_cog_adj"]
+    + w2 * results["r_man_adj"]
+    + w3 * results["wages_mean_adj"]
 )
 
-# Same for the 'all' filter
-all_filter = reduce(
-    operator.and_,
-    [pl.col(field) == "All" for field in selections.keys()]
-)
+isAllParticipants = results.Group == "All Participants"
 
-# Perform all operations in one optimized query
-result = (
-    df_lazy
-    .with_columns([
-        # Add filter flags
-        selected_filter.alias("is_selected"),
-        all_filter.alias("is_all")
-    ])
-    .with_columns([
-        # Calculate sums for counts
-        pl.when(pl.col("is_selected"))
-        .then(pl.col("count"))
-        .otherwise(0)
-        .sum()
-        .over(pl.lit(1))  # Window over entire dataset
-        .alias("selected_count_sum"),
-        
-        pl.when(pl.col("is_all"))
-        .then(pl.col("count"))
-        .otherwise(0)
-        .sum()
-        .over(pl.lit(1))  # Window over entire dataset
-        .alias("all_count_sum")
-    ])
-    .filter(pl.col("is_selected") | pl.col("is_all"))
-    .with_columns([
-        # Add Group column
-        pl.when(pl.col("is_all"))
-        .then(pl.lit("All Participants"))
-        .otherwise(pl.lit("Selected Participants"))
-        .alias("Group")
-    ])
-    .drop("bin_offshor_industry_y mean")
-    .rename({
+# Extract the index
+index_all = results.loc[isAllParticipants, "Index"].item()
+index_selections = results.loc[~isAllParticipants, "Index"].item()
+
+# Extract the count sums
+count_all = results_all["count"].item()
+count_selections = results_selections["count"].item()
+
+results = (
+    results
+    .rename(columns={
         "bin_r_cog_industry_y mean": "Higher Routine Cognitive Tasks",
         "bin_r_man_industry_y mean": "Higher Routine Manual Tasks", 
         "bin_wages_mean_y mean": "Higher Mean Wages",
@@ -258,29 +275,22 @@ result = (
         "diff_wages_mean_y median": "Median Mean Wages",
         "diff_wages_mean_y 25th": "25th Mean Wages",
         "diff_wages_mean_y 75th": "75th Mean Wages",
+
+        "count": "Count",
     })
-    .unpivot(
-        on=["Higher Routine Cognitive Tasks", "Higher Routine Manual Tasks", "Higher Mean Wages",
+    .melt(
+        id_vars=["Group"],
+        value_vars=["Higher Routine Cognitive Tasks", "Higher Routine Manual Tasks", "Higher Mean Wages",
             "Median Routine Cognitive Tasks", "Median Routine Manual Tasks" , "Median Mean Wages",
             "25th Routine Cognitive Tasks", "25th Routine Manual Tasks" , "25th Mean Wages",
-            "75th Routine Cognitive Tasks", "75th Routine Manual Tasks" , "75th Mean Wages",
-            "index_y"],
-        index=["Group", "selected_count_sum", "all_count_sum"],
-        variable_name="Statistic",
+            "75th Routine Cognitive Tasks", "75th Routine Manual Tasks" , "75th Mean Wages"],
+        var_name="Statistic",
         value_name="Value"
     )
-    .collect()
 )
 
-# Extract the count sums
-selected_rows = result["selected_count_sum"][0]
-total_rows = result["all_count_sum"][0]
-
-# Clean up the final dataframe
-plot_df_pl = result.select(["Group", "Statistic", "Value"])
-
 # Convert to pandas if needed for plotting
-plot_df = plot_df_pl.to_pandas()
+plot_df = results
 
 tab1, tab2, tab3 = st.tabs(["Index", "Methodology", "Version History"])
 
@@ -372,21 +382,19 @@ with tab1:
 
     is_quantile = plot_df['Statistic'].str.startswith(("25th", "Median", "75th"))
 
-    is_all_selected = all(value == "All" for value in selections.values())
-    selected_index = index_df["Value"].get("Selected Participants")
-    all_index = index_df["Value"].get("All Participants")
+    is_all_selected = all == selections
 
     if is_all_selected:
-        selected_index = all_index
+        index_selections = index_all
         diff = None
     else:
-        diff = selected_index - all_index if selected_index is not None and all_index is not None else None
+        diff = index_selections - index_all if index_selections is not None and index_all is not None else None
 
-    if selected_index is not None:
+    if index_selections is not None:
         st.markdown(
             f"""
             <div style="text-align: center; font-size: 2.8em; font-weight: bold; margin-top: 1em; margin-bottom: 1em">
-                Index: {selected_index:.2f}
+                Index: {index_selections:.2f}
                 {f'<div style="font-size: 0.4em; font-weight: lighter; color: {"green" if diff > 0 else "red"};">({diff:+.2f} compared to all participants)</div>' if diff is not None else ''}
             </div>
             """,
@@ -405,14 +413,14 @@ with tab1:
     # --- Summary Metrics ---
     col1, col2, col3 = st.columns(3)
 
-    if not is_all_selected and selected_index is not None:
-        col1.metric("Percent of Participants", f"{100 * selected_rows / total_rows:0.1f}%")
-        col2.metric("Selected Participants", f"{selected_rows:,.0f}")
+    if not is_all_selected and index_selections is not None:
+        col1.metric("Percent of Participants", f"{100 * count_selections / count_all:0.1f}%")
+        col2.metric("Selected Participants", f"{count_selections:,.0f}")
     else:
         col1.metric("Percent of Participants", "100.0%")
-        col2.metric("Selected Participants", f"{total_rows:,.0f}")
+        col2.metric("Selected Participants", f"{count_all:,.0f}")
 
-    col3.metric("All Participants", f"{total_rows:,.0f}")
+    col3.metric("All Participants", f"{count_all:,.0f}")
 
     # --- Dumbbell Chart ---
     fig = go.Figure()
