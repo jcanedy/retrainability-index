@@ -12,7 +12,7 @@ import operator
 
 '''
 # Retrainability Index
-v0.0.5 _(research prototpye)_
+v0.0.6 _(research prototpye)_
 
 _Author(s): Jordan Canedy-Specht [LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy)_
 
@@ -585,8 +585,11 @@ with tab1:
 
 with tab3:
     """
+        **v0.0.6 (06.08.2025)**
+        - Added means of pre- and post-program changes in Wage Gain, Routine Cognitive Exposure, and Routine Manual Exposure.
+
         **v0.0.5 (02.08.2025)**
-        - Added box plot figure to capture magnitude of pre- and post-program changes in Wage Gain, Routine Cognitive Exposure, and Routine Manual Exposure .
+        - Added box plot figure to capture magnitude of pre- and post-program changes in Wage Gain, Routine Cognitive Exposure, and Routine Manual Exposure.
         
         **v0.0.4 (31.07.2025)**
         - Modified index and subindex calculation (see Methodology for additional details).
