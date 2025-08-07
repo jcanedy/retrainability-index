@@ -68,6 +68,18 @@ matrix = matrix.rename(
 )
 
 # %%
+# Create a seperate mapping for the subsector codes (e.g., ends with 000)
+is_subsector_code = matrix["industry_code"].str.endswith("000")
+
+subsector_matrix = matrix[is_subsector_code][["industry_title", "industry_code"]].drop_duplicates().copy()
+
+subsector_matrix = subsector_matrix.rename(
+    columns={
+        "industry_title": "subsector_title",
+        "industry_code": "subsector_code"
+    })
+
+# %%
 # Filter to occupation/industry codes which represent the detailed occupation/industry
 isOccupationTypeLineItem = matrix["occupation_type"] == "Line item"
 isIndustryTypeLineItem = matrix["industry_type"] == "Line item"
@@ -130,10 +142,36 @@ rti_by_industry_code['subsector_code'] = rti_by_industry_code['industry_code'].a
 rti_by_industry_code['industry_group_code'] = rti_by_industry_code['industry_code'].apply(lambda x : x[:4] + '00')
 rti_by_industry_code['naics_industry_code'] = rti_by_industry_code['industry_code'].apply(lambda x : x[:5] + '0')
 
+# %%
+# Group by the naics_industry_code and take the mean of the rti metrics in the case of multiple. 
+
+rti_by_naics_industry_code = rti_by_industry_code.groupby('naics_industry_code').agg({
+    'r_cog_industry': 'mean',
+    'r_man_industry': 'mean',
+    'offshor_industry': 'mean',
+    'industry_title': lambda x: '/ '.join(sorted(set(x)))
+}).reset_index()
+
+# %%
+# Group by the subsector_code and take the mean of the rti metrics in the case of multiple. 
+
+rti_by_subsector_code = rti_by_industry_code.groupby('subsector_code').agg({
+    'r_cog_industry': 'mean',
+    'r_man_industry': 'mean',
+    'offshor_industry': 'mean',
+    'industry_title': lambda x: '/ '.join(sorted(set(x)))
+}).reset_index()
+
+rti_by_subsector_code = rti_by_subsector_code.merge(subsector_matrix, on="subsector_code", how="left")
+is_subsector_title_na = rti_by_subsector_code["subsector_title"].isna()
+
+rti_by_subsector_code.loc[is_subsector_title_na, "subsector_title"] = rti_by_subsector_code.loc[is_subsector_title_na, "industry_title"] 
 
 # %%
 # Save as csv files
-rti_by_industry_code.to_csv("data/processed/rti_by_industry.csv", index=False)
-rti_by_occupation_code.to_csv("data/processed/rti_by_occupation.csv", index=False)
+rti_by_industry_code.to_parquet("data/processed/rti_by_industry.parquet", index=False)
+rti_by_occupation_code.to_parquet("data/processed/rti_by_occupation.parquet", index=False)
+rti_by_subsector_code.to_parquet("data/processed/rti_by_subsector.parquet", index=False)
+rti_by_naics_industry_code.to_parquet("data/processed/rti_by_naics_industry.parquet", index=False)
 
 print("Script finished!")
