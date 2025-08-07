@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
@@ -38,6 +39,10 @@ column_names = {
     'PIRL1300': 'received_training_x', # IN 1
     'PIRL1301': 'training_provider_1_x', # AN 75
     'PIRL1303': 'training_service_type_1_x', # IN 2 
+    'PIRL1310': 'training_service_type_2_x', # IN 2
+    'PIRL1315': 'training_service_type_3_x', # IN 2
+    'PIRL1328': 'training_provided_online', # IN 1
+    'PIRL1333': 'recieved_private_sector_training_x', # IN 1
     'PIRL1600': 'employment_q1_y', # IN 1
     'PIRL1602': 'employment_q2_y', # IN 1
     'PIRL1604': 'employment_q3_y', # IN 1
@@ -82,23 +87,19 @@ column_names = {
  }
 
 columns = column_names.keys()
-
+# %%
 # Load preprocessed data.
-data = pl.read_parquet("cloud/storage/processed/wioa_data.parquet")
-occupations = pl.read_csv('cloud/storage/processed/occupations.csv')
-rti_by_occupation = pl.read_csv('cloud/storage/processed/rti_by_occupation.csv')
-rti_by_industry = pl.read_csv('cloud/storage/processed/rti_by_industry.csv')
-workforce_boards = pd.read_csv('cloud/storage/processed/workforce_boards.csv')
-
-#TODO(jcanedy27@gmail.com): Move to `compute_rti_by_industry.py`.
-# Recast to string
-rti_by_industry = rti_by_industry.with_columns(
-    pl.col("industry_code", "industry_code_prefix").cast(pl.String)
-)
+data = pl.read_parquet("data/processed/wioa_data.parquet")
+occupations = pl.read_csv('data/processed/occupations.csv')
+rti_by_subsector = pl.read_parquet('data/processed/rti_by_subsector.parquet')
+rti_by_industry = pl.read_parquet('data/processed/rti_by_industry.parquet')
+rti_by_occupation = pl.read_parquet('data/processed/rti_by_occupation.parquet')
+workforce_boards = pd.read_csv('data/processed/workforce_boards.csv')
 
 # Rename WIOA columns to human readable column names.
 data = data.select(columns).rename(column_names)
 print(f"Data shape after initial load: {data.shape}")
+# %%
 
 # Remap numeric column values to interpretable values.
 employment_status_x_map = {
@@ -217,7 +218,7 @@ data = (
 )
 
 print(f"Data shape after remaping column values: {data.shape}")
-
+# %%
 # Add an individaual's pre-program occupation title based on the occupation code.
 data = (
     data.join(
@@ -283,7 +284,7 @@ data = (
 )
 
 print(f"Data shape after adding pre- and post-program occupation-level rti: {data.shape}")
-
+# %%
 # Use the latest industry code to represent the industry of individual's pre-program employment.
 data = data.with_columns(
     pl.coalesce([
@@ -303,7 +304,9 @@ data = data.with_columns(
     ]).alias("industry_code_y")
 )
 
-def format_industry_code(code):
+# %%
+
+def convert_industry_to_subsector_code(code):
     """
     Formats a numeric industry code by converting it to a 6-digit string 
     with the first 3 digits preserved and the last 3 set to '000'.
@@ -326,22 +329,27 @@ def format_industry_code(code):
         code = code[:3] + '000'
         return code
 
-# Format industry codes appropriately
-data = data.with_columns(
-    pl.col("industry_code_x", "industry_code_y").map_elements(format_industry_code, return_dtype=pl.String)
-)
-print(f"Data shape after adding pre- and post-program industry codes: {data.shape}")
+# Convert industry codes to subsector codes appropriately
 
+data = data.with_columns(
+    pl.col("industry_code_x", "industry_code_y").map_elements(convert_industry_to_subsector_code, return_dtype=pl.String)
+).rename({
+    "industry_code_x": "subsector_code_x",
+    "industry_code_y": "subsector_code_y"
+})
+
+print(f"Data shape after adding pre- and post-program industry codes: {data.shape}")
+# %%
 # Join with industry-level rti for pre-program industry codes
 data = (
    data.join(
-      rti_by_industry,
-      left_on="industry_code_x",
-      right_on="industry_code",
+      rti_by_subsector,
+      left_on="subsector_code_x",
+      right_on="subsector_code",
       how="left"
    )
    .rename({
-      "industry_title": "industry_title_x",
+      "subsector_title": "industry_title_x",
       "r_cog_industry": "r_cog_industry_x",
       "r_man_industry": "r_man_industry_x",
       "offshor_industry": "offshor_industry_x"
@@ -351,13 +359,13 @@ data = (
 # Join with industry-level rti for pre-program industry codes
 data = (
    data.join(
-      rti_by_industry,
-      left_on="industry_code_y",
-      right_on="industry_code",
+      rti_by_subsector,
+      left_on="subsector_code_y",
+      right_on="subsector_code",
       how="left"
    )
    .rename({
-      "industry_title": "industry_title_y",
+      "subsector_title": "industry_title_y",
       "r_cog_industry": "r_cog_industry_y",
       "r_man_industry": "r_man_industry_y",
       "offshor_industry": "offshor_industry_y"
@@ -366,6 +374,7 @@ data = (
 
 print(f"Data shape after adding pre- and post-program industry-level rti: {data.shape}")
 
+# %%
 # Calculate pre- and post-program difference in wages
 data = data.with_columns([
     pl.mean_horizontal("wages_q1_x", "wages_q2_x", "wages_q3_x").alias("wages_mean_x"),
@@ -413,7 +422,7 @@ data = data.with_columns(df_normalized)
 
 print(f"Data shape after constructing and normalizing response variables: {data.shape}")
 
-
+# %%
 # Create indicator variables for pre- and post-program differences in 
 # routine cognitive, routine manual, offshorability, and wages
 data = data.with_columns([
@@ -460,6 +469,7 @@ data = data.with_columns(
 )
 print(f"Data shape after assigning outcome tier: {data.shape}")
 
+# %%
 # Define dimensions and metrics
 dimensions = [
     'low_income_x', 'employment_status_x', 'received_training_x',
@@ -485,10 +495,14 @@ metrics = [
     "diff_wages_mean_y median",
     "diff_wages_mean_y 25th",
     "diff_wages_mean_y 75th",
+    "diff_r_cog_industry_y mean",
+    "diff_r_man_industry_y mean",
+    "diff_offshor_industry_y mean",
+    "diff_wages_mean_y mean",
     "count",
 ]
 
-column_order = dimensions + metrics + ["__groupby__"]
+column_order = dimensions + metrics
 
 # Clean data - drop rows with nulls in any dimension column
 data = data.drop_nulls(subset=dimensions)
@@ -554,10 +568,12 @@ tier2_data, consolidated_cols, non_consolidated_cols = consolidate_multiple_colu
 )
 
 print(f"Data shape after consolidating columns: {data.shape}")
+# %%
 
 # Save data for separate analysis
 tier2_data.write_parquet("data/processed/wioa_data_tier2.parquet", compression="snappy")
 
+# %%
 aggregates = []
 
 aggregations = [
@@ -569,18 +585,22 @@ aggregations = [
     pl.col("diff_r_cog_industry_y").median().alias("diff_r_cog_industry_y median"),
     pl.col("diff_r_cog_industry_y").quantile(0.25, interpolation="linear").alias("diff_r_cog_industry_y 25th"),
     pl.col("diff_r_cog_industry_y").quantile(0.75, interpolation="linear").alias("diff_r_cog_industry_y 75th"),
+    pl.col("diff_r_cog_industry_y").mean().alias("diff_r_cog_industry_y mean"),
 
     pl.col("diff_r_man_industry_y").median().alias("diff_r_man_industry_y median"),
     pl.col("diff_r_man_industry_y").quantile(0.25, interpolation="linear").alias("diff_r_man_industry_y 25th"),
     pl.col("diff_r_man_industry_y").quantile(0.75, interpolation="linear").alias("diff_r_man_industry_y 75th"),
+    pl.col("diff_r_man_industry_y").mean().alias("diff_r_man_industry_y mean"),
 
     pl.col("diff_offshor_industry_y").median().alias("diff_offshor_industry_y median"),
     pl.col("diff_offshor_industry_y").quantile(0.25, interpolation="linear").alias("diff_offshor_industry_y 25th"),
     pl.col("diff_offshor_industry_y").quantile(0.75, interpolation="linear").alias("diff_offshor_industry_y 75th"),
+     pl.col("diff_offshor_industry_y").mean().alias("diff_offshor_industry_y mean"),
 
     pl.col("diff_wages_mean_y").median().alias("diff_wages_mean_y median"),
     pl.col("diff_wages_mean_y").quantile(0.25, interpolation="linear").alias("diff_wages_mean_y 25th"),
     pl.col("diff_wages_mean_y").quantile(0.75, interpolation="linear").alias("diff_wages_mean_y 75th"),
+    pl.col("diff_wages_mean_y").mean().alias("diff_wages_mean_y mean"),
 
     pl.len().alias("count"),
 ]
@@ -617,7 +637,12 @@ index_df = index_df.with_columns([
     pl.col(c).cast(pl.Categorical) for c in dimensions
 ])
 
-index_df.write_parquet("cloud/storage/processed/index_tier2.parquet", compression="zstd")
+# %%
+index_df.head()
+
+# %%
+index_df.write_parquet("data/processed/index_tier2.parquet", compression="zstd")
 print(f"Data shape after saving index Tier 2: {index_df.shape}")
 
 print("Script finished!")
+# %%

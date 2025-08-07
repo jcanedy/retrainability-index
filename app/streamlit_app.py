@@ -12,7 +12,7 @@ import operator
 
 '''
 # Retrainability Index
-v0.0.5 _(research prototpye)_
+v0.0.6 _(research prototpye)_
 
 _Author(s): Jordan Canedy-Specht [LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy)_
 
@@ -260,30 +260,34 @@ count_selections = results_selections["count"].item()
 results = (
     results
     .rename(columns={
-        "bin_r_cog_industry_y mean": "Higher Routine Cognitive Tasks",
-        "bin_r_man_industry_y mean": "Higher Routine Manual Tasks", 
-        "bin_wages_mean_y mean": "Higher Mean Wages",
+        "bin_r_cog_industry_y mean": "Higher Routine Cognitive Exposure",
+        "bin_r_man_industry_y mean": "Higher Routine Manual Exposure ", 
+        "bin_wages_mean_y mean": "Wage Gain",
 
-        "diff_r_cog_industry_y median": "Median Routine Cognitive Tasks",
-        "diff_r_cog_industry_y 25th": "25th Routine Cognitive Tasks",
-        "diff_r_cog_industry_y 75th": "75th Routine Cognitive Tasks",
+        "diff_r_cog_industry_y median": "Median Routine Cognitive Exposure",
+        "diff_r_cog_industry_y 25th": "25th Routine Cognitive Exposure",
+        "diff_r_cog_industry_y 75th": "75th Routine Cognitive Exposure",
+        "diff_r_cog_industry_y mean": "Mean Routine Cognitive Exposure",
 
-        "diff_r_man_industry_y median": "Median Routine Manual Tasks",
-        "diff_r_man_industry_y 25th": "25th Routine Manual Tasks",
-        "diff_r_man_industry_y 75th": "75th Routine Manual Tasks",
+        "diff_r_man_industry_y median": "Median Routine Manual Exposure ",
+        "diff_r_man_industry_y 25th": "25th Routine Manual Exposure ",
+        "diff_r_man_industry_y 75th": "75th Routine Manual Exposure ",
+        "diff_r_man_industry_y mean": "Mean Routine Manual Exposure ",
 
-        "diff_wages_mean_y median": "Median Mean Wages",
-        "diff_wages_mean_y 25th": "25th Mean Wages",
-        "diff_wages_mean_y 75th": "75th Mean Wages",
+        "diff_wages_mean_y median": "Median Wage Gain",
+        "diff_wages_mean_y 25th": "25th Wage Gain",
+        "diff_wages_mean_y 75th": "75th Wage Gain",
+        "diff_wages_mean_y mean": "Mean Wage Gain",
 
         "count": "Count",
     })
     .melt(
         id_vars=["Group"],
-        value_vars=["Higher Routine Cognitive Tasks", "Higher Routine Manual Tasks", "Higher Mean Wages",
-            "Median Routine Cognitive Tasks", "Median Routine Manual Tasks" , "Median Mean Wages",
-            "25th Routine Cognitive Tasks", "25th Routine Manual Tasks" , "25th Mean Wages",
-            "75th Routine Cognitive Tasks", "75th Routine Manual Tasks" , "75th Mean Wages"],
+        value_vars=["Higher Routine Cognitive Exposure", "Higher Routine Manual Exposure ", "Wage Gain",
+            "Median Routine Cognitive Exposure", "Median Routine Manual Exposure " , "Median Wage Gain",
+            "25th Routine Cognitive Exposure", "25th Routine Manual Exposure " , "25th Wage Gain",
+            "75th Routine Cognitive Exposure", "75th Routine Manual Exposure " , "75th Wage Gain",
+            "Mean Routine Cognitive Exposure", "Mean Routine Manual Exposure ", "Mean Wage Gain"],
         var_name="Statistic",
         value_name="Value"
     )
@@ -309,7 +313,7 @@ with tab2:
         Proportion of participants employed in industries with **high manual routine** task intensity (e.g., machine operation, basic manufacturing).  
         Higher values indicate greater exposure to physically repetitive tasks vulnerable to automation.
 
-        - **Wage Gain Share** (`wgs`):  
+        - **Wage Gain** (`wg`):  
         Proportion of participants who experienced an **increase in wages** post-program compared to pre-program.  
         A higher value signals stronger economic mobility.
 
@@ -348,7 +352,7 @@ with tab2:
         rf"""
         \text{{Index}} = {w1:.2f} \cdot \text{{rce}}' \ +\ 
                         {w2:.2f} \cdot \text{{rme}}' \ +\ 
-                        {w3:.2f} \cdot \text{{wgs}}'
+                        {w3:.2f} \cdot \text{{wg}}'
         """
     )
 
@@ -381,6 +385,7 @@ with tab1:
     index_df = plot_df[is_index][["Group", "Value"]].set_index("Group")
 
     is_quantile = plot_df['Statistic'].str.startswith(("25th", "Median", "75th"))
+    is_mean = plot_df['Statistic'].str.startswith(("Mean"))
 
     is_all_selected = all == selections
 
@@ -424,7 +429,7 @@ with tab1:
 
     # --- Dumbbell Chart ---
     fig = go.Figure()
-    non_index_df = plot_df[~is_index & ~is_quantile]
+    non_index_df = plot_df[~is_index & ~is_quantile & ~is_mean]
     pivoted_df = non_index_df.pivot(index="Statistic", columns="Group", values="Value")
 
     for i, stat in enumerate(pivoted_df.index):
@@ -480,6 +485,8 @@ with tab1:
 
     st.plotly_chart(fig)
 
+    # --- Mean Metrics ---
+
     # --- Box Chart ---
     # .pivot_table(index="Group", columns=["Statistic"], values="Value")
     quantiles_df = plot_df[is_quantile].set_index("Group").pivot_table(index="Statistic", columns="Group", values="Value")
@@ -493,7 +500,7 @@ with tab1:
     q3 = quantiles_df[is_q3]
 
     # Define subplot titles (same order as columns in median/q1/q3)
-    subplot_titles = ['Mean Wages', 'Routine Cognitive Tasks', 'Routine Manual Tasks']
+    subplot_titles = ['Routine Cognitive Exposure', 'Routine Manual Exposure', 'Wage Gain']
 
     # Use group names from columns
     groups = median.columns.tolist()
@@ -552,14 +559,37 @@ with tab1:
         )
     )
 
-
     st.plotly_chart(fig)
+
+    st.write("Below are the wage gain and routine task intensity differences for selected participants compared to all participants.")
+
+    mean_df = plot_df[is_mean]
+    mean_pivoted_df = mean_df.pivot(index="Statistic", columns="Group", values="Value")
+
+    stat_cols = st.columns(len(mean_pivoted_df.index))
+
+    for i, stat in enumerate(mean_pivoted_df.index):
+        group_a_val = mean_pivoted_df.loc[stat, 'Selected Participants']
+        group_b_val = mean_pivoted_df.loc[stat, 'All Participants']
+
+        # Show Group A as main value, Group B as fake delta
+        stat_cols[i].metric(
+            label=stat,
+            value=f"{group_a_val:.2f}",
+            delta=f"{group_a_val - group_b_val:.2f}"  # Just showing Group B as "delta"
+        )
+
+
+    
 
 
 with tab3:
     """
+        **v0.0.6 (06.08.2025)**
+        - Added means of pre- and post-program changes in Wage Gain, Routine Cognitive Exposure, and Routine Manual Exposure.
+
         **v0.0.5 (02.08.2025)**
-        - Added box plot figure to capture magnitude of pre- and post-program changes in wages, routine cognitive tasks, and routine manual tasks.
+        - Added box plot figure to capture magnitude of pre- and post-program changes in Wage Gain, Routine Cognitive Exposure, and Routine Manual Exposure.
         
         **v0.0.4 (31.07.2025)**
         - Modified index and subindex calculation (see Methodology for additional details).
