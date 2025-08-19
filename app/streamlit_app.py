@@ -12,7 +12,7 @@ import operator
 
 '''
 # Retrainability Index
-v0.0.6 _(research prototpye)_
+v0.0.7 _(research prototpye)_
 
 _Author(s): Jordan Canedy-Specht [LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy)_
 
@@ -38,7 +38,7 @@ def get_unique_values_for_columns(columns: list[str]) -> dict:
     query = f"""
         SELECT
           {select_sql}
-        FROM `retraining-index.processed.index_tier2`
+        FROM `retraining-index.processed.index_tier2_v0_0_7`
     """
 
     client = bigquery.Client()
@@ -63,7 +63,7 @@ def get_single_row(filters: dict):
 
     query = f"""
         SELECT *
-        FROM `retraining-index.processed.index_tier2`
+        FROM `retraining-index.processed.index_tier2_v0_0_7`
         WHERE {where_sql}
         LIMIT 1
     """
@@ -80,9 +80,9 @@ columns = {
     "highest_education_level_x": "highest_education_level_options",
     "low_income_x": "low_income_options",
     "employment_status_x": "employment_status_options",
-    "received_training_x": "received_training_options",
     "state_x": "state_options",
     "industry_title_x": "industry_title_options",
+    "industry_title_y": "exit_industry_title_options",
 }
 
 column_options = get_unique_values_for_columns([
@@ -92,9 +92,9 @@ column_options = get_unique_values_for_columns([
     "highest_education_level_x",
     "low_income_x",
     "employment_status_x",
-    "received_training_x",
     "state_x",
-    "industry_title_x"
+    "industry_title_x",
+    "industry_title_y",
 ])
 
 def sort_with_all_other(options, custom_order=None):
@@ -145,9 +145,9 @@ race_ethnicity_options = sort_with_all_other(column_options["race_ethnicity_x"])
 sex_options = sort_with_all_other(column_options["sex_x"])
 low_income_options = sort_with_all_other(column_options["low_income_x"])
 employment_status_options = sort_with_all_other(column_options["employment_status_x"])
-received_training_options = sort_with_all_other(column_options["received_training_x"])
 state_options = sort_with_all_other(column_options["state_x"])
 industry_title_options = sort_with_all_other(column_options["industry_title_x"])
+exit_industry_title_options = sort_with_all_other(column_options["industry_title_y"])
 
 
 # Config: field name -> label for display
@@ -159,8 +159,8 @@ sidebar_fields = [
     ("low_income_x", "Low Income"),
     ("employment_status_x", "Employment Status"),
     ("state_x", "State"),
-    ("received_training_x", "Received Training"),
-    ("industry_title_x", "Industry Code"),
+    ("industry_title_x", "Entry Industry Code"),
+    ("industry_title_y", "Exit Industry Code"),
 ]
 
 # Use the *_options variables already created
@@ -171,9 +171,9 @@ options_lookup = {
     "highest_education_level_x": highest_education_level_options,
     "low_income_x": low_income_options,
     "employment_status_x": employment_status_options,
-    "received_training_x": received_training_options,
     "state_x": state_options,
-    "industry_title_x": industry_title_options,  
+    "industry_title_x": industry_title_options, 
+    "industry_title_y": exit_industry_title_options, 
 }
 
 # Store selected values here
@@ -196,20 +196,25 @@ with st.sidebar:
 
     st.markdown("### Program Information")
 
-    # Handle next 2 fields
-    col1, col2 = st.columns(2)
-    field1, label1 = sidebar_fields[6]
-    field2, label2 = sidebar_fields[7]
-
-    with col1:
-        selections[field1] = st.selectbox(label1, options_lookup[field1])
-    with col2:
-        selections[field2] = st.selectbox(label2, options_lookup[field2])
+    field, label = sidebar_fields[6]
+    selections[field] = st.selectbox(label, options_lookup[field])
 
     st.markdown("### Prior Employment")
-    selections["industry_title_x"] = st.selectbox(
-        "Industry Code", options_lookup["industry_title_x"]
-    )
+
+    col1, col2 = st.columns(2)
+
+    field1, label1 = sidebar_fields[7]
+    field2, label2 = sidebar_fields[8]
+
+    with col1:
+        selections[field1] = st.selectbox(
+           label1, options_lookup[field1]
+        )
+
+    with col2:
+        selections[field2] = st.selectbox(
+           label2, options_lookup[field2]
+        )
 
 all = {
     "race_ethnicity_x":"All",
@@ -218,8 +223,8 @@ all = {
     "low_income_x":"All",
     "employment_status_x":"All",
     "state_x":"All",
-    "received_training_x":
-    "All","industry_title_x":"All"
+    "industry_title_x":"All",
+    "industry_title_y":"All"
 }
 
 results_all = get_single_row(all)
@@ -585,6 +590,10 @@ with tab1:
 
 with tab3:
     """
+        **v0.0.7 (06.19.2025)**
+        - Added exit industry filter.
+        - Removed `Received Training` filter.
+
         **v0.0.6 (06.08.2025)**
         - Added means of pre- and post-program changes in Wage Gain, Routine Cognitive Exposure, and Routine Manual Exposure.
 

@@ -89,16 +89,28 @@ column_names = {
 columns = column_names.keys()
 # %%
 # Load preprocessed data.
-data = pl.read_parquet("data/processed/wioa_data.parquet")
+data = pl.scan_parquet("data/processed/wioa_data.parquet")
 occupations = pl.read_csv('data/processed/occupations.csv')
 rti_by_subsector = pl.read_parquet('data/processed/rti_by_subsector.parquet')
 rti_by_industry = pl.read_parquet('data/processed/rti_by_industry.parquet')
 rti_by_occupation = pl.read_parquet('data/processed/rti_by_occupation.parquet')
 workforce_boards = pd.read_csv('data/processed/workforce_boards.csv')
 
+# Filter only to specific programs / funding streams
+data = (
+    data
+    .filter(
+        (pl.col("CALC4001") == 1) | # Adult
+        (pl.col("CALC4002") == 1) | # Dislocated worker
+        (pl.col("CALC4004") == 1) | # National Dislocated Worker Grants
+        (pl.col("PIRL914").is_in([1, 2])) # Veterans’ Programs
+    )
+    .collect()
+)
+print(f"Data shape after removing Wagner-Peyser program participants: {data.shape}")
+
 # Rename WIOA columns to human readable column names.
 data = data.select(columns).rename(column_names)
-print(f"Data shape after initial load: {data.shape}")
 # %%
 
 # Remap numeric column values to interpretable values.
@@ -472,9 +484,9 @@ print(f"Data shape after assigning outcome tier: {data.shape}")
 # %%
 # Define dimensions and metrics
 dimensions = [
-    'low_income_x', 'employment_status_x', 'received_training_x',
+    'low_income_x', 'employment_status_x',
     'race_ethnicity_x', 'sex_x', 'age_x', 'highest_education_level_x',
-    'industry_title_x', 'state_x'
+    'industry_title_x', 'industry_title_y', 'state_x'
 ]
 
 #TODO(jcanedy27@): Consolidate count variables to a single column
