@@ -36,6 +36,7 @@ column_names = {
     'PIRL808': 'eligible_farmworker_x', # IN 1
     'PIRL900': 'program_entry_date_x', # DT 8
     'PIRL901': 'program_exit_date_y', # DT 8
+    'PIRL914': 'veterans_program_x', # IN 2
     'PIRL1300': 'received_training_x', # IN 1
     'PIRL1301': 'training_provider_1_x', # AN 75
     'PIRL1303': 'training_service_type_1_x', # IN 2 
@@ -96,22 +97,18 @@ rti_by_industry = pl.read_parquet('data/processed/rti_by_industry.parquet')
 rti_by_occupation = pl.read_parquet('data/processed/rti_by_occupation.parquet')
 workforce_boards = pd.read_csv('data/processed/workforce_boards.csv')
 
-# Filter only to specific programs / funding streams
-data = (
-    data
-    .filter(
-        (pl.col("CALC4001") == 1) | # Adult
-        (pl.col("CALC4002") == 1) | # Dislocated worker
-        (pl.col("CALC4004") == 1) | # National Dislocated Worker Grants
-        (pl.col("PIRL914").is_in([1, 2])) # Veterans’ Programs
-    )
-    .collect()
-)
-print(f"Data shape after removing Wagner-Peyser program participants: {data.shape}")
-
 # Rename WIOA columns to human readable column names.
 data = data.select(columns).rename(column_names)
 # %%
+data = data.with_columns(
+    pl.when(pl.col("adult_funding_x") == 1).then(pl.lit("Adult"))
+    .when(pl.col("dislocated_funding_x") == 1).then(pl.lit("Dislocated worker"))
+    .when(pl.col("dislocated_grant_x") == 1).then(pl.lit("National Dislocated Worker Grants"))
+    .when(pl.col("wagner_peyser_funding_x") == 1).then(pl.lit("Wagner-Peyser"))
+    .when(pl.col("veterans_program_x").is_in([1, 2])).then(pl.lit("Veterans’ Programs"))
+    .otherwise(pl.lit("Otherwise"))
+    .alias("funding_stream_x")
+)
 
 # Remap numeric column values to interpretable values.
 employment_status_x_map = {
@@ -214,7 +211,7 @@ training_service_type_map = {
 }
 
 data = (
-  data.lazy()
+    data
     .with_columns([
       pl.col("employment_status_x").replace_strict(employment_status_x_map, default=None).alias("employment_status_x"),
       pl.col("low_income_x").replace_strict(low_income_x_map, default=None).alias("low_income_x"),
@@ -486,7 +483,7 @@ print(f"Data shape after assigning outcome tier: {data.shape}")
 dimensions = [
     'low_income_x', 'employment_status_x',
     'race_ethnicity_x', 'sex_x', 'age_x', 'highest_education_level_x',
-    'industry_title_x', 'industry_title_y', 'state_x'
+    'industry_title_x', 'industry_title_y', 'state_x', 'funding_stream_x'
 ]
 
 #TODO(jcanedy27@): Consolidate count variables to a single column
@@ -583,7 +580,7 @@ print(f"Data shape after consolidating columns: {data.shape}")
 # %%
 
 # Save data for separate analysis
-tier2_data.write_parquet("data/processed/wioa_data_tier2.parquet", compression="snappy")
+# tier2_data.write_parquet("data/processed/wioa_data_tier2.parquet", compression="snappy")
 
 # %%
 aggregates = []

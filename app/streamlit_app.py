@@ -25,9 +25,9 @@ The index incorporates measures of routine task intensity (RTI) based on the tas
 As a proof of concept, the index also highlights demographic differences in outcomes. Going forward, we aim to expand the Retainability Index deeply, by incorporating additional outcome variables such as job tenure, benefits, and occupational mobility; and broadly, by adapting the methodology for use in other countries as comparable labor and training data become available.
 '''
 
-# df_lazy = pl.scan_parquet("/cloud/storage/processed/index_tier2.parquet")
+TABLE = 'index_tier2_v0_0_8'
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=None, show_spinner="Loading")
 def get_unique_values_for_columns(columns: list[str]) -> dict:
     # Build SELECT clause dynamically
     select_clauses = [
@@ -38,7 +38,7 @@ def get_unique_values_for_columns(columns: list[str]) -> dict:
     query = f"""
         SELECT
           {select_sql}
-        FROM `retraining-index.processed.index_tier2_v0_0_7`
+        FROM `retraining-index.processed.{TABLE}`
     """
 
     client = bigquery.Client()
@@ -49,7 +49,7 @@ def get_unique_values_for_columns(columns: list[str]) -> dict:
     return result
 
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=None, show_spinner="Loading")
 def get_single_row(filters: dict):
     where_clauses = []
     parameters = []
@@ -63,7 +63,7 @@ def get_single_row(filters: dict):
 
     query = f"""
         SELECT *
-        FROM `retraining-index.processed.index_tier2_v0_0_7`
+        FROM `retraining-index.processed.{TABLE}`
         WHERE {where_sql}
         LIMIT 1
     """
@@ -83,6 +83,7 @@ columns = {
     "state_x": "state_options",
     "industry_title_x": "industry_title_options",
     "industry_title_y": "exit_industry_title_options",
+    "funding_stream_x": "funding_stream_options", 
 }
 
 column_options = get_unique_values_for_columns([
@@ -95,6 +96,7 @@ column_options = get_unique_values_for_columns([
     "state_x",
     "industry_title_x",
     "industry_title_y",
+    "funding_stream_x",
 ])
 
 def sort_with_all_other(options, custom_order=None):
@@ -148,6 +150,7 @@ employment_status_options = sort_with_all_other(column_options["employment_statu
 state_options = sort_with_all_other(column_options["state_x"])
 industry_title_options = sort_with_all_other(column_options["industry_title_x"])
 exit_industry_title_options = sort_with_all_other(column_options["industry_title_y"])
+funding_stream_options = sort_with_all_other(column_options["funding_stream_x"])
 
 
 # Config: field name -> label for display
@@ -161,6 +164,7 @@ sidebar_fields = [
     ("state_x", "State"),
     ("industry_title_x", "Entry Industry Code"),
     ("industry_title_y", "Exit Industry Code"),
+    ("funding_stream_x", "Funding Stream"),
 ]
 
 # Use the *_options variables already created
@@ -173,7 +177,8 @@ options_lookup = {
     "employment_status_x": employment_status_options,
     "state_x": state_options,
     "industry_title_x": industry_title_options, 
-    "industry_title_y": exit_industry_title_options, 
+    "industry_title_y": exit_industry_title_options,
+    "funding_stream_x": funding_stream_options,
 }
 
 # Store selected values here
@@ -196,8 +201,17 @@ with st.sidebar:
 
     st.markdown("### Program Information")
 
-    field, label = sidebar_fields[6]
-    selections[field] = st.selectbox(label, options_lookup[field])
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        field, label = sidebar_fields[6]
+        selections[field] = st.selectbox(label, options_lookup[field])
+
+    with col2:
+
+        field, label = sidebar_fields[9]
+        selections[field] = st.selectbox(label, options_lookup[field])   
 
     st.markdown("### Prior Employment")
 
@@ -224,7 +238,8 @@ all = {
     "employment_status_x":"All",
     "state_x":"All",
     "industry_title_x":"All",
-    "industry_title_y":"All"
+    "industry_title_y":"All",
+    "funding_stream_x":"All",
 }
 
 results_all = get_single_row(all)
@@ -590,7 +605,10 @@ with tab1:
 
 with tab3:
     """
-        **v0.0.7 (06.19.2025)**
+        **v0.0.8 (31.08.2025)**
+        - Added `Funding Stream` filter.
+
+        **v0.0.7 (19.08.2025)**
         - Added exit industry filter.
         - Removed `Received Training` filter.
 
