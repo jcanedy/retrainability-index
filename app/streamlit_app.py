@@ -14,16 +14,37 @@ import operator
 # Retrainability Index
 v0.0.7 _(research prototpye)_
 
-_Author(s): Jordan Canedy-Specht [LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy)_
+_Author(s): Julian Jacobs ([LinkedIn](https://www.linkedin.com/in/julian-jacobs-a729b87a/), [Website](https://www.juliandjacobs.com/)), Jordan Canedy-Specht ([LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy))_
 
 _Code Repository: <https://github.com/jcanedy/retrainability-index>_
 
-The Retainability Index is a composite metric designed to evaluate how effectively workforce programs help participants access retraining, develop future-ready skills, and secure quality employment. This research prototype is built using [data from the Workforce Innovation and Opportunity Act (WIOA) program](https://www.dol.gov/agencies/eta/performance)—the U.S. Department of Labor’s flagship workforce development system. The WIOA dataset includes individual-level records for millions of participants in adult, dislocated worker, and youth programs, capturing demographics, services received, and employment and wage outcomes before and after program exit.
+This AI ‘Retrainability’ Index is designed to visualize and quantify how well United States public retraining programs help workers reskill in the face of technological automation. 
 
-The index incorporates measures of routine task intensity (RTI) based on the task framework developed by [Daron Acemoglu and David Autor (2011)](https://shapingwork.mit.edu/research/skills-tasks-and-technologies-implications-for-employment-and-earnings/). RTI scores are calculated at the industry level, using the composition of occupations typically employed within each industry in the broader economy. While RTI has previously been used to study labor market polarization and automation risk, this project applies it in a new context: as a component of a composite metric evaluating retraining program outcomes. Combined with participant-level wage progression metrics, the index provides a forward-looking signal of how well public training programs are positioning individuals for resilient, automation-resistant employment.
+### Why study retrainability?
 
-As a proof of concept, the index also highlights demographic differences in outcomes. Going forward, we aim to expand the Retainability Index deeply, by incorporating additional outcome variables such as job tenure, benefits, and occupational mobility; and broadly, by adapting the methodology for use in other countries as comparable labor and training data become available.
+In this project, we look at outcomes for the NUMBER of Americans from YEAR RANGE who participated in the retraining offered through the [Workforce Innovation and Opportunity Act (WIOA)](https://www.dol.gov/agencies/eta/performance). 
+
+Policymakers - both historically and today - often regard worker retraining (or reskilling) as an effective policy response to support workers who have been displaced by technological change. And yet, there is currently limited research studying the efficacy of these retraining programs in supporting technology labor market adjustment.
+
+This project’s core contribution is the development of a ‘retrainability index’, which calculates at the individual level a person’s likelihood of successfully retraining into work that is both better compensated and more resilient in the face of automation than their prior employment. 
+
+We proxy for automation exposure through routine task intensity (RTI) - a measure of how ‘routine’ the cognitive and manual work a particular job is, which has been [used](https://shapingwork.mit.edu/research/skills-tasks-and-technologies-implications-for-employment-and-earnings/) by social scientists for decades. Generally, more routine cognitive and manual tasks have been more at risk of automation.
+
+It is worth noting here that, since we are looking at WIOA performance data from YEAR RANGE, this tool is necessarily backwards looking. We are looking at how well US public retraining has supported worker adjustment to digitalization shocks, for instance, not the potential forthcoming AI labor market shock. This backward focus is intentional - AI economic effects are only beginning to emerge, and existing variables of AI exposure tend to primarily capture AI complementarity, as opposed to displacement, risks. 
+
+Our Retrainability Index is a composite of how much retraining impacts wages and the routinization of work that retainers perform. 
 '''
+
+with st.expander("How to use this tool"):
+    '''
+    Like automation risk, ‘retrainability’ is not spread evenly across American demographics and geography. 
+
+    Automation risk tells us how likely it is a person will lose their job or experience wage stagnation due to technological change.
+
+    On the other hand, the retrainability index tells us how likely it is that a person will become more upwardly mobile in the face of automation, through US public retraining programs. 
+
+    For the most part, US public retraining participants serve vulnerable lower income Americans, many of whom have been long - term unemployed. As a result, the population represented in this research is not representative of the broader United States. However, it nonetheless allows us to paint a picture of how some of America's most vulnerable workers have fared through public retraining, pointing to where future investment and programmatic improvements might be necessary. 
+    '''
 
 TABLE = 'index_tier2_v0_0_8'
 
