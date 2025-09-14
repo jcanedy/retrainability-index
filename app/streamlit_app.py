@@ -12,28 +12,29 @@ import operator
 
 '''
 # Retrainability Index
-v0.0.7 _(research prototpye)_
+v0.0.9 _(research prototpye)_
 
-_Author(s): Julian Jacobs ([LinkedIn](https://www.linkedin.com/in/julian-jacobs-a729b87a/), [Website](https://www.juliandjacobs.com/)), Jordan Canedy-Specht ([LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy))_
+_Author(s): Julian Jacobs ([LinkedIn](https://www.linkedin.com/in/julian-jacobs-a729b87a/), [Website](https://www.juliandjacobs.com/)), Jordan Canedy-Specht ([LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Website](https://jordancanedy.com/))_
 
 _Code Repository: <https://github.com/jcanedy/retrainability-index>_
 
 This AI ‘Retrainability’ Index is designed to visualize and quantify how well United States public retraining programs help workers reskill in the face of technological automation. 
-
-### Why study retrainability?
-
-In this project, we look at outcomes for the NUMBER of Americans from YEAR RANGE who participated in the retraining offered through the [Workforce Innovation and Opportunity Act (WIOA)](https://www.dol.gov/agencies/eta/performance). 
-
-Policymakers - both historically and today - often regard worker retraining (or reskilling) as an effective policy response to support workers who have been displaced by technological change. And yet, there is currently limited research studying the efficacy of these retraining programs in supporting technology labor market adjustment.
-
-This project’s core contribution is the development of a ‘retrainability index’, which calculates at the individual level a person’s likelihood of successfully retraining into work that is both better compensated and more resilient in the face of automation than their prior employment. 
-
-We proxy for automation exposure through routine task intensity (RTI) - a measure of how ‘routine’ the cognitive and manual work a particular job is, which has been [used](https://shapingwork.mit.edu/research/skills-tasks-and-technologies-implications-for-employment-and-earnings/) by social scientists for decades. Generally, more routine cognitive and manual tasks have been more at risk of automation.
-
-It is worth noting here that, since we are looking at WIOA performance data from YEAR RANGE, this tool is necessarily backwards looking. We are looking at how well US public retraining has supported worker adjustment to digitalization shocks, for instance, not the potential forthcoming AI labor market shock. This backward focus is intentional - AI economic effects are only beginning to emerge, and existing variables of AI exposure tend to primarily capture AI complementarity, as opposed to displacement, risks. 
-
-Our Retrainability Index is a composite of how much retraining impacts wages and the routinization of work that retainers perform. 
 '''
+
+with st.expander("Why study retrainability"):
+    '''
+    In this project, we look at outcomes for over 12.7 of Americans from January 1, 2012 to June 30, 2024 who participated in the retraining offered through the [Workforce Innovation and Opportunity Act (WIOA)](https://www.dol.gov/agencies/eta/performance). 
+
+    Policymakers - both historically and today - often regard worker retraining (or reskilling) as an effective policy response to support workers who have been displaced by technological change. And yet, there is currently limited research studying the efficacy of these retraining programs in supporting technology labor market adjustment.
+
+    This project’s core contribution is the development of a ‘retrainability index’, which calculates at the individual level a person’s likelihood of successfully retraining into work that is both better compensated and more resilient in the face of automation than their prior employment. 
+
+    We proxy for automation exposure through routine task intensity (RTI) - a measure of how ‘routine’ the cognitive and manual work a particular job is, which has been [used](https://shapingwork.mit.edu/research/skills-tasks-and-technologies-implications-for-employment-and-earnings/) by social scientists for decades. Generally, more routine cognitive and manual tasks have been more at risk of automation.
+
+    It is worth noting here that, since we are looking at WIOA performance data from January 1, 2012 to June 30, 2024, this tool is necessarily backwards looking. We are looking at how well US public retraining has supported worker adjustment to digitalization shocks, for instance, not the potential forthcoming AI labor market shock. This backward focus is intentional - AI economic effects are only beginning to emerge, and existing variables of AI exposure tend to primarily capture AI complementarity, as opposed to displacement, risks. 
+
+    Our Retrainability Index is a composite of how much retraining impacts wages and the routinization of work that retainers perform. 
+    '''
 
 with st.expander("How to use this tool"):
     '''
@@ -101,6 +102,7 @@ columns = {
     "highest_educational_level": "highest_education_level_options",
     "low_income_status": "low_income_options",
     "employment_status": "employment_status_options",
+    "state": "state_options",
     "subsector_title_pre": "industry_title_options",
     "subsector_title_post": "exit_industry_title_options",
     "funding_stream": "funding_stream_options", 
@@ -113,6 +115,7 @@ column_options = get_unique_values_for_columns([
     "highest_educational_level",
     "low_income_status",
     "employment_status",
+    "state",
     "subsector_title_pre",
     "subsector_title_post",
     "funding_stream",
@@ -166,6 +169,7 @@ race_ethnicity_options = sort_with_all_other(column_options["race"])
 sex_options = sort_with_all_other(column_options["sex"])
 low_income_options = sort_with_all_other(column_options["low_income_status"])
 employment_status_options = sort_with_all_other(column_options["employment_status"])
+state_options = sort_with_all_other(column_options["state"])
 industry_title_options = sort_with_all_other(column_options["subsector_title_pre"])
 exit_industry_title_options = sort_with_all_other(column_options["subsector_title_post"])
 funding_stream_options = sort_with_all_other(column_options["funding_stream"])
@@ -179,6 +183,7 @@ sidebar_fields = [
     ("highest_educational_level", "Highest Education Level"),
     ("low_income_status", "Low Income"),
     ("employment_status", "Employment Status"),
+    ("state", "State"),
     ("subsector_title_pre", "Entry Industry Code"),
     ("subsector_title_post", "Exit Industry Code"),
     ("funding_stream", "Funding Stream"),
@@ -192,6 +197,7 @@ options_lookup = {
     "highest_educational_level": highest_education_level_options,
     "low_income_status": low_income_options,
     "employment_status": employment_status_options,
+    "state": state_options,
     "subsector_title_pre": industry_title_options, 
     "subsector_title_post": exit_industry_title_options,
     "funding_stream": funding_stream_options,
@@ -220,15 +226,21 @@ with st.sidebar:
     col1, col2 = st.columns(2)
 
     with col1:
-        field, label = sidebar_fields[8]
+
+        field, label = sidebar_fields[6]
         selections[field] = st.selectbox(label, options_lookup[field])
 
-    st.markdown("### Employment")
+    with col2:
+
+        field, label = sidebar_fields[9]
+        selections[field] = st.selectbox(label, options_lookup[field])   
+
+    st.markdown("### Prior Employment")
 
     col1, col2 = st.columns(2)
 
-    field1, label1 = sidebar_fields[6]
-    field2, label2 = sidebar_fields[7]
+    field1, label1 = sidebar_fields[7]
+    field2, label2 = sidebar_fields[8]
 
     with col1:
         selections[field1] = st.selectbox(
@@ -246,6 +258,7 @@ all = {
     "highest_educational_level":"All",
     "low_income_status":"All",
     "employment_status":"All",
+    "state":"All",
     "subsector_title_pre":"All",
     "subsector_title_post":"All",
     "funding_stream":"All",
@@ -614,6 +627,9 @@ with tab1:
 
 with tab3:
     """
+        **v0.0.9 (14.09.2025)**
+        - Expanded WIOA/WIA dataset to include data from January 1, 2012 to June 30, 2024.
+
         **v0.0.8 (31.08.2025)**
         - Added `Funding Stream` filter.
 
