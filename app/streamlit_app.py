@@ -12,20 +12,42 @@ import operator
 
 '''
 # Retrainability Index
-v0.0.7 _(research prototpye)_
+v0.0.9 _(research prototpye)_
 
-_Author(s): Jordan Canedy-Specht [LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Github](https://github.com/jcanedy)_
+_Author(s): Julian Jacobs ([LinkedIn](https://www.linkedin.com/in/julian-jacobs-a729b87a/), [Website](https://www.juliandjacobs.com/)), Jordan Canedy-Specht ([LinkedIn](https://www.linkedin.com/in/jordancanedy/), [Website](https://jordancanedy.com/))_
 
 _Code Repository: <https://github.com/jcanedy/retrainability-index>_
 
-The Retainability Index is a composite metric designed to evaluate how effectively workforce programs help participants access retraining, develop future-ready skills, and secure quality employment. This research prototype is built using [data from the Workforce Innovation and Opportunity Act (WIOA) program](https://www.dol.gov/agencies/eta/performance)—the U.S. Department of Labor’s flagship workforce development system. The WIOA dataset includes individual-level records for millions of participants in adult, dislocated worker, and youth programs, capturing demographics, services received, and employment and wage outcomes before and after program exit.
-
-The index incorporates measures of routine task intensity (RTI) based on the task framework developed by [Daron Acemoglu and David Autor (2011)](https://shapingwork.mit.edu/research/skills-tasks-and-technologies-implications-for-employment-and-earnings/). RTI scores are calculated at the industry level, using the composition of occupations typically employed within each industry in the broader economy. While RTI has previously been used to study labor market polarization and automation risk, this project applies it in a new context: as a component of a composite metric evaluating retraining program outcomes. Combined with participant-level wage progression metrics, the index provides a forward-looking signal of how well public training programs are positioning individuals for resilient, automation-resistant employment.
-
-As a proof of concept, the index also highlights demographic differences in outcomes. Going forward, we aim to expand the Retainability Index deeply, by incorporating additional outcome variables such as job tenure, benefits, and occupational mobility; and broadly, by adapting the methodology for use in other countries as comparable labor and training data become available.
+This AI ‘Retrainability’ Index is designed to visualize and quantify how well United States public retraining programs help workers reskill in the face of technological automation. 
 '''
 
-TABLE = 'index_tier2_v0_0_8'
+with st.expander("Why study retrainability"):
+    '''
+    In this project, we look at outcomes for over 12.7 of Americans from January 1, 2012 to June 30, 2024 who participated in the retraining offered through the [Workforce Innovation and Opportunity Act (WIOA)](https://www.dol.gov/agencies/eta/performance). 
+
+    Policymakers - both historically and today - often regard worker retraining (or reskilling) as an effective policy response to support workers who have been displaced by technological change. And yet, there is currently limited research studying the efficacy of these retraining programs in supporting technology labor market adjustment.
+
+    This project’s core contribution is the development of a ‘retrainability index’, which calculates at the individual level a person’s likelihood of successfully retraining into work that is both better compensated and more resilient in the face of automation than their prior employment. 
+
+    We proxy for automation exposure through routine task intensity (RTI) - a measure of how ‘routine’ the cognitive and manual work a particular job is, which has been [used](https://shapingwork.mit.edu/research/skills-tasks-and-technologies-implications-for-employment-and-earnings/) by social scientists for decades. Generally, more routine cognitive and manual tasks have been more at risk of automation.
+
+    It is worth noting here that, since we are looking at WIOA performance data from January 1, 2012 to June 30, 2024, this tool is necessarily backwards looking. We are looking at how well US public retraining has supported worker adjustment to digitalization shocks, for instance, not the potential forthcoming AI labor market shock. This backward focus is intentional - AI economic effects are only beginning to emerge, and existing variables of AI exposure tend to primarily capture AI complementarity, as opposed to displacement, risks. 
+
+    Our Retrainability Index is a composite of how much retraining impacts wages and the routinization of work that retainers perform. 
+    '''
+
+with st.expander("How to use this tool"):
+    '''
+    Like automation risk, ‘retrainability’ is not spread evenly across American demographics and geography. 
+
+    Automation risk tells us how likely it is a person will lose their job or experience wage stagnation due to technological change.
+
+    On the other hand, the retrainability index tells us how likely it is that a person will become more upwardly mobile in the face of automation, through US public retraining programs. 
+
+    For the most part, US public retraining participants serve vulnerable lower income Americans, many of whom have been long - term unemployed. As a result, the population represented in this research is not representative of the broader United States. However, it nonetheless allows us to paint a picture of how some of America's most vulnerable workers have fared through public retraining, pointing to where future investment and programmatic improvements might be necessary. 
+    '''
+
+TABLE = 'index_tier2_v0_0_9'
 
 @st.cache_data(ttl=None, show_spinner="Loading")
 def get_unique_values_for_columns(columns: list[str]) -> dict:
@@ -74,29 +96,29 @@ def get_single_row(filters: dict):
 
 # Define mapping from input column names to output variable names with '_options' suffix
 columns = {
-    "race_ethnicity_x": "race_ethnicity_options",
-    "sex_x": "sex_options",
-    "age_x": "age_options",
-    "highest_education_level_x": "highest_education_level_options",
-    "low_income_x": "low_income_options",
-    "employment_status_x": "employment_status_options",
-    "state_x": "state_options",
-    "industry_title_x": "industry_title_options",
-    "industry_title_y": "exit_industry_title_options",
-    "funding_stream_x": "funding_stream_options", 
+    "race": "race_ethnicity_options",
+    "sex": "sex_options",
+    "age": "age_options",
+    "highest_educational_level": "highest_education_level_options",
+    "low_income_status": "low_income_options",
+    "employment_status": "employment_status_options",
+    "state": "state_options",
+    "subsector_title_pre": "industry_title_options",
+    "subsector_title_post": "exit_industry_title_options",
+    "funding_stream": "funding_stream_options", 
 }
 
 column_options = get_unique_values_for_columns([
-    "race_ethnicity_x",
-    "sex_x",
-    "age_x",
-    "highest_education_level_x",
-    "low_income_x",
-    "employment_status_x",
-    "state_x",
-    "industry_title_x",
-    "industry_title_y",
-    "funding_stream_x",
+    "race",
+    "sex",
+    "age",
+    "highest_educational_level",
+    "low_income_status",
+    "employment_status",
+    "state",
+    "subsector_title_pre",
+    "subsector_title_post",
+    "funding_stream",
 ])
 
 def sort_with_all_other(options, custom_order=None):
@@ -127,7 +149,7 @@ age_custom_order = [
     "55 to 64 years",
     "65 to 84 years"
 ]
-age_options = sort_with_all_other(column_options["age_x"], age_custom_order)
+age_options = sort_with_all_other(column_options["age"], age_custom_order)
 
 # Use custom sort for education
 education_custom_order = [
@@ -140,45 +162,45 @@ education_custom_order = [
     "Attained a Bachelor's degree",
     "Attained a degree beyond a Bachelor's degree"
 ]
-highest_education_level_options = sort_with_all_other(column_options["highest_education_level_x"], education_custom_order)
+highest_education_level_options = sort_with_all_other(column_options["highest_educational_level"], education_custom_order)
 
 # Apply default sort (alphabetical + All/Other positioning) to all others
-race_ethnicity_options = sort_with_all_other(column_options["race_ethnicity_x"])
-sex_options = sort_with_all_other(column_options["sex_x"])
-low_income_options = sort_with_all_other(column_options["low_income_x"])
-employment_status_options = sort_with_all_other(column_options["employment_status_x"])
-state_options = sort_with_all_other(column_options["state_x"])
-industry_title_options = sort_with_all_other(column_options["industry_title_x"])
-exit_industry_title_options = sort_with_all_other(column_options["industry_title_y"])
-funding_stream_options = sort_with_all_other(column_options["funding_stream_x"])
+race_ethnicity_options = sort_with_all_other(column_options["race"])
+sex_options = sort_with_all_other(column_options["sex"])
+low_income_options = sort_with_all_other(column_options["low_income_status"])
+employment_status_options = sort_with_all_other(column_options["employment_status"])
+state_options = sort_with_all_other(column_options["state"])
+industry_title_options = sort_with_all_other(column_options["subsector_title_pre"])
+exit_industry_title_options = sort_with_all_other(column_options["subsector_title_post"])
+funding_stream_options = sort_with_all_other(column_options["funding_stream"])
 
 
 # Config: field name -> label for display
 sidebar_fields = [
-    ("race_ethnicity_x", "Race / Ethnicity"),
-    ("sex_x", "Sex"),
-    ("age_x", "Age"),
-    ("highest_education_level_x", "Highest Education Level"),
-    ("low_income_x", "Low Income"),
-    ("employment_status_x", "Employment Status"),
-    ("state_x", "State"),
-    ("industry_title_x", "Entry Industry Code"),
-    ("industry_title_y", "Exit Industry Code"),
-    ("funding_stream_x", "Funding Stream"),
+    ("race", "Race / Ethnicity"),
+    ("sex", "Sex"),
+    ("age", "Age"),
+    ("highest_educational_level", "Highest Education Level"),
+    ("low_income_status", "Low Income"),
+    ("employment_status", "Employment Status"),
+    ("state", "State"),
+    ("subsector_title_pre", "Entry Industry Code"),
+    ("subsector_title_post", "Exit Industry Code"),
+    ("funding_stream", "Funding Stream"),
 ]
 
 # Use the *_options variables already created
 options_lookup = {
-    "race_ethnicity_x": race_ethnicity_options,
-    "sex_x": sex_options,
-    "age_x": age_options,
-    "highest_education_level_x": highest_education_level_options,
-    "low_income_x": low_income_options,
-    "employment_status_x": employment_status_options,
-    "state_x": state_options,
-    "industry_title_x": industry_title_options, 
-    "industry_title_y": exit_industry_title_options,
-    "funding_stream_x": funding_stream_options,
+    "race": race_ethnicity_options,
+    "sex": sex_options,
+    "age": age_options,
+    "highest_educational_level": highest_education_level_options,
+    "low_income_status": low_income_options,
+    "employment_status": employment_status_options,
+    "state": state_options,
+    "subsector_title_pre": industry_title_options, 
+    "subsector_title_post": exit_industry_title_options,
+    "funding_stream": funding_stream_options,
 }
 
 # Store selected values here
@@ -231,15 +253,15 @@ with st.sidebar:
         )
 
 all = {
-    "race_ethnicity_x":"All",
-    "sex_x":"All","age_x":"All",
-    "highest_education_level_x":"All",
-    "low_income_x":"All",
-    "employment_status_x":"All",
-    "state_x":"All",
-    "industry_title_x":"All",
-    "industry_title_y":"All",
-    "funding_stream_x":"All",
+    "race":"All",
+    "sex":"All","age":"All",
+    "highest_educational_level":"All",
+    "low_income_status":"All",
+    "employment_status":"All",
+    "state":"All",
+    "subsector_title_pre":"All",
+    "subsector_title_post":"All",
+    "funding_stream":"All",
 }
 
 results_all = get_single_row(all)
@@ -257,9 +279,9 @@ weights = np.array([0.25, 0.25, 0.5])
 # Unpack weights
 w1, w2, w3 = weights
 
-results["r_cog_adj"] = (-2 * results["bin_r_cog_industry_y mean"] - 0.5)
-results["r_man_adj"] = (-2 * results["bin_r_man_industry_y mean"] - 0.5)
-results["wages_mean_adj"] = (2 * results["bin_wages_mean_y mean"] - 0.5)
+results["r_cog_adj"] = (-2 * results["percent_r_cog_industry_increased"] - 0.5)
+results["r_man_adj"] = (-2 * results["percent_r_man_industry_increased"] - 0.5)
+results["wages_mean_adj"] = (2 * results["percent_wages_mean_increased"] - 0.5)
 
 results["Index"] = (
     w1 * results["r_cog_adj"]
@@ -280,24 +302,24 @@ count_selections = results_selections["count"].item()
 results = (
     results
     .rename(columns={
-        "bin_r_cog_industry_y mean": "Higher Routine Cognitive Exposure",
-        "bin_r_man_industry_y mean": "Higher Routine Manual Exposure ", 
-        "bin_wages_mean_y mean": "Wage Gain",
+        "percent_r_cog_industry_increased": "Higher Routine Cognitive Exposure",
+        "percent_r_man_industry_increased": "Higher Routine Manual Exposure ", 
+        "percent_wages_mean_increased": "Wage Gain",
 
-        "diff_r_cog_industry_y median": "Median Routine Cognitive Exposure",
-        "diff_r_cog_industry_y 25th": "25th Routine Cognitive Exposure",
-        "diff_r_cog_industry_y 75th": "75th Routine Cognitive Exposure",
-        "diff_r_cog_industry_y mean": "Mean Routine Cognitive Exposure",
+        "diff_r_cog_industry_median": "Median Routine Cognitive Exposure",
+        "diff_r_cog_industry_25th": "25th Routine Cognitive Exposure",
+        "diff_r_cog_industry_75th": "75th Routine Cognitive Exposure",
+        "diff_r_cog_industry_mean": "Mean Routine Cognitive Exposure",
 
-        "diff_r_man_industry_y median": "Median Routine Manual Exposure ",
-        "diff_r_man_industry_y 25th": "25th Routine Manual Exposure ",
-        "diff_r_man_industry_y 75th": "75th Routine Manual Exposure ",
-        "diff_r_man_industry_y mean": "Mean Routine Manual Exposure ",
+        "diff_r_man_industry_median": "Median Routine Manual Exposure ",
+        "diff_r_man_industry_25th": "25th Routine Manual Exposure ",
+        "diff_r_man_industry_75th": "75th Routine Manual Exposure ",
+        "diff_r_man_industry_mean": "Mean Routine Manual Exposure ",
 
-        "diff_wages_mean_y median": "Median Wage Gain",
-        "diff_wages_mean_y 25th": "25th Wage Gain",
-        "diff_wages_mean_y 75th": "75th Wage Gain",
-        "diff_wages_mean_y mean": "Mean Wage Gain",
+        "diff_wages_mean_median": "Median Wage Gain",
+        "diff_wages_mean_25th": "25th Wage Gain",
+        "diff_wages_mean_75th": "75th Wage Gain",
+        "diff_wages_mean_mean": "Mean Wage Gain",
 
         "count": "Count",
     })
@@ -605,6 +627,9 @@ with tab1:
 
 with tab3:
     """
+        **v0.0.9 (14.09.2025)**
+        - Expanded WIOA/WIA dataset to include data from January 1, 2012 to June 30, 2024.
+
         **v0.0.8 (31.08.2025)**
         - Added `Funding Stream` filter.
 
