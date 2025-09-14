@@ -571,7 +571,6 @@ def consolidate_multiple_columns(data, columns, min_percentage=0.05):
     
     return consolidated_data, consolidated_columns, non_consolidated_columns
 
-# Use it - much cleaner!
 tier2_data, consolidated_cols, non_consolidated_cols = consolidate_multiple_columns(
     tier2_data, dimensions, min_percentage=0.02
 )

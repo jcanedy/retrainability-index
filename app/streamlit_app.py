@@ -46,7 +46,7 @@ with st.expander("How to use this tool"):
     For the most part, US public retraining participants serve vulnerable lower income Americans, many of whom have been long - term unemployed. As a result, the population represented in this research is not representative of the broader United States. However, it nonetheless allows us to paint a picture of how some of America's most vulnerable workers have fared through public retraining, pointing to where future investment and programmatic improvements might be necessary. 
     '''
 
-TABLE = 'index_tier2_v0_0_8'
+TABLE = 'index_tier2_v0_0_9'
 
 @st.cache_data(ttl=None, show_spinner="Loading")
 def get_unique_values_for_columns(columns: list[str]) -> dict:
@@ -95,29 +95,27 @@ def get_single_row(filters: dict):
 
 # Define mapping from input column names to output variable names with '_options' suffix
 columns = {
-    "race_ethnicity_x": "race_ethnicity_options",
-    "sex_x": "sex_options",
-    "age_x": "age_options",
-    "highest_education_level_x": "highest_education_level_options",
-    "low_income_x": "low_income_options",
-    "employment_status_x": "employment_status_options",
-    "state_x": "state_options",
-    "industry_title_x": "industry_title_options",
-    "industry_title_y": "exit_industry_title_options",
-    "funding_stream_x": "funding_stream_options", 
+    "race": "race_ethnicity_options",
+    "sex": "sex_options",
+    "age": "age_options",
+    "highest_educational_level": "highest_education_level_options",
+    "low_income_status": "low_income_options",
+    "employment_status": "employment_status_options",
+    "subsector_title_pre": "industry_title_options",
+    "subsector_title_post": "exit_industry_title_options",
+    "funding_stream": "funding_stream_options", 
 }
 
 column_options = get_unique_values_for_columns([
-    "race_ethnicity_x",
-    "sex_x",
-    "age_x",
-    "highest_education_level_x",
-    "low_income_x",
-    "employment_status_x",
-    "state_x",
-    "industry_title_x",
-    "industry_title_y",
-    "funding_stream_x",
+    "race",
+    "sex",
+    "age",
+    "highest_educational_level",
+    "low_income_status",
+    "employment_status",
+    "subsector_title_pre",
+    "subsector_title_post",
+    "funding_stream",
 ])
 
 def sort_with_all_other(options, custom_order=None):
@@ -148,7 +146,7 @@ age_custom_order = [
     "55 to 64 years",
     "65 to 84 years"
 ]
-age_options = sort_with_all_other(column_options["age_x"], age_custom_order)
+age_options = sort_with_all_other(column_options["age"], age_custom_order)
 
 # Use custom sort for education
 education_custom_order = [
@@ -161,45 +159,42 @@ education_custom_order = [
     "Attained a Bachelor's degree",
     "Attained a degree beyond a Bachelor's degree"
 ]
-highest_education_level_options = sort_with_all_other(column_options["highest_education_level_x"], education_custom_order)
+highest_education_level_options = sort_with_all_other(column_options["highest_educational_level"], education_custom_order)
 
 # Apply default sort (alphabetical + All/Other positioning) to all others
-race_ethnicity_options = sort_with_all_other(column_options["race_ethnicity_x"])
-sex_options = sort_with_all_other(column_options["sex_x"])
-low_income_options = sort_with_all_other(column_options["low_income_x"])
-employment_status_options = sort_with_all_other(column_options["employment_status_x"])
-state_options = sort_with_all_other(column_options["state_x"])
-industry_title_options = sort_with_all_other(column_options["industry_title_x"])
-exit_industry_title_options = sort_with_all_other(column_options["industry_title_y"])
-funding_stream_options = sort_with_all_other(column_options["funding_stream_x"])
+race_ethnicity_options = sort_with_all_other(column_options["race"])
+sex_options = sort_with_all_other(column_options["sex"])
+low_income_options = sort_with_all_other(column_options["low_income_status"])
+employment_status_options = sort_with_all_other(column_options["employment_status"])
+industry_title_options = sort_with_all_other(column_options["subsector_title_pre"])
+exit_industry_title_options = sort_with_all_other(column_options["subsector_title_post"])
+funding_stream_options = sort_with_all_other(column_options["funding_stream"])
 
 
 # Config: field name -> label for display
 sidebar_fields = [
-    ("race_ethnicity_x", "Race / Ethnicity"),
-    ("sex_x", "Sex"),
-    ("age_x", "Age"),
-    ("highest_education_level_x", "Highest Education Level"),
-    ("low_income_x", "Low Income"),
-    ("employment_status_x", "Employment Status"),
-    ("state_x", "State"),
-    ("industry_title_x", "Entry Industry Code"),
-    ("industry_title_y", "Exit Industry Code"),
-    ("funding_stream_x", "Funding Stream"),
+    ("race", "Race / Ethnicity"),
+    ("sex", "Sex"),
+    ("age", "Age"),
+    ("highest_educational_level", "Highest Education Level"),
+    ("low_income_status", "Low Income"),
+    ("employment_status", "Employment Status"),
+    ("subsector_title_pre", "Entry Industry Code"),
+    ("subsector_title_post", "Exit Industry Code"),
+    ("funding_stream", "Funding Stream"),
 ]
 
 # Use the *_options variables already created
 options_lookup = {
-    "race_ethnicity_x": race_ethnicity_options,
-    "sex_x": sex_options,
-    "age_x": age_options,
-    "highest_education_level_x": highest_education_level_options,
-    "low_income_x": low_income_options,
-    "employment_status_x": employment_status_options,
-    "state_x": state_options,
-    "industry_title_x": industry_title_options, 
-    "industry_title_y": exit_industry_title_options,
-    "funding_stream_x": funding_stream_options,
+    "race": race_ethnicity_options,
+    "sex": sex_options,
+    "age": age_options,
+    "highest_educational_level": highest_education_level_options,
+    "low_income_status": low_income_options,
+    "employment_status": employment_status_options,
+    "subsector_title_pre": industry_title_options, 
+    "subsector_title_post": exit_industry_title_options,
+    "funding_stream": funding_stream_options,
 }
 
 # Store selected values here
@@ -225,21 +220,15 @@ with st.sidebar:
     col1, col2 = st.columns(2)
 
     with col1:
-
-        field, label = sidebar_fields[6]
+        field, label = sidebar_fields[8]
         selections[field] = st.selectbox(label, options_lookup[field])
 
-    with col2:
-
-        field, label = sidebar_fields[9]
-        selections[field] = st.selectbox(label, options_lookup[field])   
-
-    st.markdown("### Prior Employment")
+    st.markdown("### Employment")
 
     col1, col2 = st.columns(2)
 
-    field1, label1 = sidebar_fields[7]
-    field2, label2 = sidebar_fields[8]
+    field1, label1 = sidebar_fields[6]
+    field2, label2 = sidebar_fields[7]
 
     with col1:
         selections[field1] = st.selectbox(
@@ -252,15 +241,14 @@ with st.sidebar:
         )
 
 all = {
-    "race_ethnicity_x":"All",
-    "sex_x":"All","age_x":"All",
-    "highest_education_level_x":"All",
-    "low_income_x":"All",
-    "employment_status_x":"All",
-    "state_x":"All",
-    "industry_title_x":"All",
-    "industry_title_y":"All",
-    "funding_stream_x":"All",
+    "race":"All",
+    "sex":"All","age":"All",
+    "highest_educational_level":"All",
+    "low_income_status":"All",
+    "employment_status":"All",
+    "subsector_title_pre":"All",
+    "subsector_title_post":"All",
+    "funding_stream":"All",
 }
 
 results_all = get_single_row(all)
@@ -278,9 +266,9 @@ weights = np.array([0.25, 0.25, 0.5])
 # Unpack weights
 w1, w2, w3 = weights
 
-results["r_cog_adj"] = (-2 * results["bin_r_cog_industry_y mean"] - 0.5)
-results["r_man_adj"] = (-2 * results["bin_r_man_industry_y mean"] - 0.5)
-results["wages_mean_adj"] = (2 * results["bin_wages_mean_y mean"] - 0.5)
+results["r_cog_adj"] = (-2 * results["percent_r_cog_industry_increased"] - 0.5)
+results["r_man_adj"] = (-2 * results["percent_r_man_industry_increased"] - 0.5)
+results["wages_mean_adj"] = (2 * results["percent_wages_mean_increased"] - 0.5)
 
 results["Index"] = (
     w1 * results["r_cog_adj"]
@@ -301,24 +289,24 @@ count_selections = results_selections["count"].item()
 results = (
     results
     .rename(columns={
-        "bin_r_cog_industry_y mean": "Higher Routine Cognitive Exposure",
-        "bin_r_man_industry_y mean": "Higher Routine Manual Exposure ", 
-        "bin_wages_mean_y mean": "Wage Gain",
+        "percent_r_cog_industry_increased": "Higher Routine Cognitive Exposure",
+        "percent_r_man_industry_increased": "Higher Routine Manual Exposure ", 
+        "percent_wages_mean_increased": "Wage Gain",
 
-        "diff_r_cog_industry_y median": "Median Routine Cognitive Exposure",
-        "diff_r_cog_industry_y 25th": "25th Routine Cognitive Exposure",
-        "diff_r_cog_industry_y 75th": "75th Routine Cognitive Exposure",
-        "diff_r_cog_industry_y mean": "Mean Routine Cognitive Exposure",
+        "diff_r_cog_industry_median": "Median Routine Cognitive Exposure",
+        "diff_r_cog_industry_25th": "25th Routine Cognitive Exposure",
+        "diff_r_cog_industry_75th": "75th Routine Cognitive Exposure",
+        "diff_r_cog_industry_mean": "Mean Routine Cognitive Exposure",
 
-        "diff_r_man_industry_y median": "Median Routine Manual Exposure ",
-        "diff_r_man_industry_y 25th": "25th Routine Manual Exposure ",
-        "diff_r_man_industry_y 75th": "75th Routine Manual Exposure ",
-        "diff_r_man_industry_y mean": "Mean Routine Manual Exposure ",
+        "diff_r_man_industry_median": "Median Routine Manual Exposure ",
+        "diff_r_man_industry_25th": "25th Routine Manual Exposure ",
+        "diff_r_man_industry_75th": "75th Routine Manual Exposure ",
+        "diff_r_man_industry_mean": "Mean Routine Manual Exposure ",
 
-        "diff_wages_mean_y median": "Median Wage Gain",
-        "diff_wages_mean_y 25th": "25th Wage Gain",
-        "diff_wages_mean_y 75th": "75th Wage Gain",
-        "diff_wages_mean_y mean": "Mean Wage Gain",
+        "diff_wages_mean_median": "Median Wage Gain",
+        "diff_wages_mean_25th": "25th Wage Gain",
+        "diff_wages_mean_75th": "75th Wage Gain",
+        "diff_wages_mean_mean": "Mean Wage Gain",
 
         "count": "Count",
     })
