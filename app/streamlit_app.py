@@ -9,6 +9,7 @@ import streamlit as st
 from functools import reduce
 import operator
 
+st.set_page_config(page_title="Retrainability Index", page_icon="💼")
 
 '''
 # Retrainability Index
