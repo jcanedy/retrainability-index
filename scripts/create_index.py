@@ -579,7 +579,7 @@ print(f"Data shape after consolidating columns: {data.shape}")
 # %%
 
 # Save data for separate analysis
-# tier2_data.write_parquet("data/processed/wioa_data_tier2.parquet", compression="snappy")
+tier2_data.write_parquet("data/processed/wioa_data_tier2.parquet", compression="snappy")
 
 # %%
 aggregates = []
