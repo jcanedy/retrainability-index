@@ -8,10 +8,15 @@ from typing import Any
 import polars as pl
 
 def read_csv(
-    path: str | Path, 
+    path: str | Path,
+    lazy: bool = False,
     **kwargs
-) -> pl.DataFrame:
+) -> pl.DataFrame | pl.LazyFrame:
     """Read a CSV file into a DataFrame."""
+
+    if lazy:
+        return pl.scan_csv(path, **kwargs)
+
     return pl.read_csv(path, **kwargs)
 
 def read_parquet(
