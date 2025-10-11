@@ -307,6 +307,19 @@ wheels = [
 ]
 
 [[package]]
+name = "fastexcel"
+version = "0.16.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/7c/77fe2f25c4ff1c798b021cad7cddf00ff2a42118b9b59eec8ef5f0d5b5cf/fastexcel-0.16.0.tar.gz", hash = "sha256:7f6597ee86e0cda296bcc620d20fcf2de9903f8d3b99b365b7f45248d535556d", size = 59038, upload-time = "2025-09-22T12:34:40.041Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/44/2dc31ec48d8f63f1d93e11ef19636a442c39775d49f1472f4123a6b38c34/fastexcel-0.16.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:48c56a501abc1cf0890294527dc924cb0d919fd5095f684ebcf52806135e9df8", size = 3061679, upload-time = "2025-09-22T12:34:35.542Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/d8/ef4489cd00fe9fe52bef176ed32a8bb5837dd97518bb950bbd68f546ed1c/fastexcel-0.16.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:bae61533745fae226ea19f6d198570d5c76a8de816e222ff717aff82d8d6e473", size = 2803453, upload-time = "2025-09-22T12:34:37.168Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/cc/95cf27168d4b4fec3d2e404d70a0fb5d5b7a18872192c8cd8b3a272d31dc/fastexcel-0.16.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ec1c56b9b3b7b7ff2bde64dbe0e378a707287aff9deeb71ff6d0f8c3b7d24e34", size = 3130831, upload-time = "2025-09-22T12:34:32.22Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/23/02012e9c7e584e6f85e1e7078beff3dc56aaad2e51b0a33bbcaa1dc2aa6e/fastexcel-0.16.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e1059eac593f4b92843ac9d10901677cccc2a8152c67e315c9dfbd7ce7c722e7", size = 3331124, upload-time = "2025-09-22T12:34:33.974Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/2e/805c2d0e799710e4937d084d9c37821bafa129eda1de62c3279a042ca56d/fastexcel-0.16.0-cp39-abi3-win_amd64.whl", hash = "sha256:04c2b6fea7292e26d76a458f9095f4ec260c864c90be7a7161d20ca81cf77fd8", size = 2819876, upload-time = "2025-09-22T12:34:38.716Z" },
+]
+
+[[package]]
 name = "fonttools"
 version = "4.59.0"
 source = { registry = "https://pypi.org/simple" }
@@ -547,6 +560,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7590aa73f1f1d3fa9a380e654b86af429e0934a32f7d/idna-3.10.tar.gz", hash = "sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9", size = 190490, upload-time = "2024-09-15T18:07:39.745Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442, upload-time = "2024-09-15T18:07:37.964Z" },
+]
+
+[[package]]
+name = "iniconfig"
+version = "2.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f2/97/ebf4da567aa6827c909642694d71c9fcf53e5b504f2d96afea02718862f3/iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7", size = 4793, upload-time = "2025-03-19T20:09:59.721Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760", size = 6050, upload-time = "2025-03-19T20:10:01.071Z" },
 ]
 
 [[package]]
@@ -958,6 +980,15 @@ wheels = [
 ]
 
 [[package]]
+name = "perfect"
+version = "0.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/ce/e489e7877e6c78ee9fc3e8b1487ac71adaeb65472050199d932e06f849fc/perfect-0.0.1.tar.gz", hash = "sha256:80cf69c13ee92114106591b56d38e579567b4c571de92f8370c5e23a82008477", size = 4060, upload-time = "2019-11-30T01:46:05.027Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/47/866491e108defb0a173231b9c95bd39747d16e0bb7da2f70a311236d6756/perfect-0.0.1-py3-none-any.whl", hash = "sha256:eb6eab0a9dce012aa80e21f0ad7d429e3edb106de0b2d7b85c99e8cd10c5c5b3", size = 4348, upload-time = "2019-11-30T01:46:02.711Z" },
+]
+
+[[package]]
 name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1055,6 +1086,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6e/5c/0efc297df362b88b74957a230af61cd6929f531f72f48063e8408702ffba/plotly-6.2.0.tar.gz", hash = "sha256:9dfa23c328000f16c928beb68927444c1ab9eae837d1fe648dbcda5360c7953d", size = 6801941, upload-time = "2025-06-26T16:20:45.765Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ed/20/f2b7ac96a91cc5f70d81320adad24cc41bf52013508d649b1481db225780/plotly-6.2.0-py3-none-any.whl", hash = "sha256:32c444d4c940887219cb80738317040363deefdfee4f354498cc0b6dab8978bd", size = 9635469, upload-time = "2025-06-26T16:20:40.76Z" },
+]
+
+[[package]]
+name = "pluggy"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3", size = 69412, upload-time = "2025-05-15T12:30:07.975Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746", size = 20538, upload-time = "2025-05-15T12:30:06.134Z" },
 ]
 
 [[package]]
@@ -1371,6 +1411,22 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest"
+version = "8.4.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "iniconfig" },
+    { name = "packaging" },
+    { name = "pluggy" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a3/5c/00a0e072241553e1a7496d638deababa67c5058571567b92a7eaa258397c/pytest-8.4.2.tar.gz", hash = "sha256:86c0d0b93306b961d58d62a4db4879f27fe25513d4b969df351abdddb3c30e01", size = 1519618, upload-time = "2025-09-04T14:34:22.711Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/a4/20da314d277121d6534b3a980b29035dcd51e6744bd79075a6ce8fa4eb8d/pytest-8.4.2-py3-none-any.whl", hash = "sha256:872f880de3fc3a5bdc88a11b39c9710c3497a547cfa9320bc3c5e62fbf272e79", size = 365750, upload-time = "2025-09-04T14:34:20.226Z" },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -1478,12 +1534,22 @@ dependencies = [
     { name = "google-cloud-bigquery-storage" },
     { name = "ipykernel" },
     { name = "openpyxl" },
+    { name = "perfect" },
     { name = "plotly" },
     { name = "polars" },
     { name = "scikit-learn" },
     { name = "scipy" },
     { name = "seaborn" },
     { name = "streamlit" },
+    { name = "xlsx2csv" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "fastexcel" },
+    { name = "openpyxl" },
+    { name = "pytest" },
+    { name = "xlsxwriter" },
 ]
 
 [package.metadata]
@@ -1495,12 +1561,22 @@ requires-dist = [
     { name = "google-cloud-bigquery-storage", specifier = ">=2.32.0" },
     { name = "ipykernel", specifier = ">=6.30.0" },
     { name = "openpyxl", specifier = ">=3.1.5" },
+    { name = "perfect", specifier = ">=0.0.1" },
     { name = "plotly", specifier = ">=6.2.0" },
     { name = "polars", specifier = ">=1.31.0" },
     { name = "scikit-learn", specifier = ">=1.7.1" },
     { name = "scipy", specifier = ">=1.16.0" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "streamlit", specifier = ">=1.47.0" },
+    { name = "xlsx2csv", specifier = ">=0.8.4" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "fastexcel", specifier = ">=0.16.0" },
+    { name = "openpyxl", specifier = ">=3.1.5" },
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "xlsxwriter", specifier = ">=3.2.9" },
 ]
 
 [[package]]
@@ -1903,4 +1979,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/6c/63/53559446a878410fc5a5974feb13d31d78d752eb18aeba59c7fef1af7598/wcwidth-0.2.13.tar.gz", hash = "sha256:72ea0c06399eb286d978fdedb6923a9eb47e1c486ce63e9b4e64fc18303972b5", size = 101301, upload-time = "2024-01-06T02:10:57.829Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/84/fd2ba7aafacbad3c4201d395674fc6348826569da3c0937e75505ead3528/wcwidth-0.2.13-py2.py3-none-any.whl", hash = "sha256:3da69048e4540d84af32131829ff948f1e022c1c6bdb8d6102117aac784f6859", size = 34166, upload-time = "2024-01-06T02:10:55.763Z" },
+]
+
+[[package]]
+name = "xlsx2csv"
+version = "0.8.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/36/20/94860286a308a4213581c1beacd4fc7be724250c03583fcff23aaa6107bb/xlsx2csv-0.8.4.tar.gz", hash = "sha256:2aa809888826f6af5b26c77fc7f613f2bbeada0d8cc09e5a58e0f59684bb6911", size = 221390, upload-time = "2024-11-19T17:06:07.818Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c4/c0/15c21556362c67f1155f3643a375d50ac67559b82c768e64e800a42a2577/xlsx2csv-0.8.4-py3-none-any.whl", hash = "sha256:52ab873fc7b2f2ca75d14aee8bd1985a9f5c1bcb3cc7b80df7a5d57a40a67473", size = 15904, upload-time = "2024-11-19T17:06:05.362Z" },
+]
+
+[[package]]
+name = "xlsxwriter"
+version = "3.2.9"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/2c/c06ef49dc36e7954e55b802a8b231770d286a9758b3d936bd1e04ce5ba88/xlsxwriter-3.2.9.tar.gz", hash = "sha256:254b1c37a368c444eac6e2f867405cc9e461b0ed97a3233b2ac1e574efb4140c", size = 215940, upload-time = "2025-09-16T00:16:21.63Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/0c/3662f4a66880196a590b202f0db82d919dd2f89e99a27fadef91c4a33d41/xlsxwriter-3.2.9-py3-none-any.whl", hash = "sha256:9a5db42bc5dff014806c58a20b9eae7322a134abb6fce3c92c181bfb275ec5b3", size = 175315, upload-time = "2025-09-16T00:16:20.108Z" },
 ]

@@ -12,10 +12,23 @@ dependencies = [
     "google-cloud-bigquery-storage>=2.32.0",
     "ipykernel>=6.30.0",
     "openpyxl>=3.1.5",
+    "perfect>=0.0.1",
     "plotly>=6.2.0",
     "polars>=1.31.0",
     "scikit-learn>=1.7.1",
     "scipy>=1.16.0",
     "seaborn>=0.13.2",
     "streamlit>=1.47.0",
+    "xlsx2csv>=0.8.4",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[dependency-groups]
+dev = [
+    "fastexcel>=0.16.0",
+    "openpyxl>=3.1.5",
+    "pytest>=8.4.2",
+    "xlsxwriter>=3.2.9",
 ]
