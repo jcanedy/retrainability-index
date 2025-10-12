@@ -24,17 +24,46 @@ def task_industries_filter(df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 @task
-def task_industries_write_parquet(df: pl.DataFrame) -> None:
-    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}industries.parquet", compression="zstd")
+def task_industries_filter_to_sector(df: pl.DataFrame) -> pl.DataFrame:
+    df = industries.filter_to_sector(df)
+    return df
+
+@task
+def task_industries_filter_to_subsector(df: pl.DataFrame) -> pl.DataFrame:
+    df = industries.filter_to_subsector(df)
+    return df
+
+@task
+def task_industries_join(
+    df: pl.DataFrame, 
+    df_sector: pl.DataFrame,
+    df_subsector: pl.DataFrame,
+):
+    df = industries.join_sector(df, df_sector)
+    df = industries.join_subsector(df, df_subsector)
+
+    return df
+
+@task
+def task_industries_write_parquet(df: pl.DataFrame, filename: str) -> None:
+    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}{filename}", compression="zstd")
 
 @flow
 def occupations_pipeline() -> None:
     df = task_industries_excel_read()
     df = task_industries_normalize(df)
-    df = task_industries_filter(df)
-    df = task_industries_group_by_subsector(df)
-    print(df.head(10))
-    task_industries_write_parquet(df)
+    df_sector = task_industries_filter_to_sector(df)
+    df_subsector = task_industries_filter_to_subsector(df)
+    df_industries = task_industries_filter(df)
+    df_industries = task_industries_join(
+        df_industries, 
+        df_sector, 
+        df_subsector
+    )
+    print(df_industries.filter(pl.col("sector_title").is_not_null()).head(10))
+    task_industries_write_parquet(df_sector, "sectors.parquet")
+    task_industries_write_parquet(df_subsector, "subsectors.parquet")
+    task_industries_write_parquet(df_industries, "industries.parquet")
 
     return
 

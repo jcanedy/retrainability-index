@@ -100,3 +100,71 @@ def filter(df: pl.DataFrame) -> pl.DataFrame:
     )
 
     return df_filtered
+
+def filter_to_sector(df: pl.DataFrame) -> pl.DataFrame:
+    """Filter to sector codes (i.e., ends with 0000)."""
+
+    df_filtered = (
+        df
+        # Filter to subsector codes (e.g., ends with 000)
+        .filter(
+            pl.col("industry_code").str.ends_with(pl.lit("0000")) &
+            ~pl.col("industry_code").str.ends_with(pl.lit("00000"))
+        )
+        .unique(subset=["industry_title", "industry_code"])
+        .rename({
+            "industry_title": "sector_title",
+        })
+        .select(
+            pl.col("sector_code"),
+            pl.col("sector_title")
+        )
+    )
+
+    return df_filtered
+
+def filter_to_subsector(df: pl.DataFrame) -> pl.DataFrame:
+    """Filter to subsector codes (i.e., ends with 000)."""
+
+    df_filtered = (
+        df
+        # Filter to subsector codes (e.g., ends with 000)
+        .filter(
+            pl.col("industry_code").str.ends_with(pl.lit("000")) &
+            ~pl.col("industry_code").str.ends_with(pl.lit("0000"))
+        )
+        .unique(subset=["industry_title", "industry_code"])
+        .rename({
+            "industry_title": "subsector_title",
+        })
+        .select(
+            pl.col("subsector_code"),
+            pl.col("subsector_title")
+        )
+    )
+
+    return df_filtered
+
+def join_sector(df: pl.DataFrame, df_sector: pl.DataFrame) -> pl.DataFrame:
+
+    df = (
+        df.join(
+            df_sector,
+            on="sector_code",
+            how="left"
+        )
+    )
+
+    return df
+
+def join_subsector(df: pl.DataFrame, df_subsector: pl.DataFrame) -> pl.DataFrame:
+
+    df = (
+        df.join(
+            df_subsector,
+            on="subsector_code",
+            how="left"
+        )
+    )
+
+    return df

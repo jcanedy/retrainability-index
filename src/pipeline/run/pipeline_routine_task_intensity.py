@@ -28,9 +28,18 @@ def task_routine_task_intensity_compute_industry(df: pl.DataFrame) -> pl.DataFra
     return df
 
 @task
-def task_routine_task_intensity_group_by_subsector(df: pl.DataFrame) -> pl.DataFrame:
-    df = routine_task_intensity.group_by_subsector(df)
+def task_routine_task_intensity_compute_sector(df: pl.DataFrame) -> pl.DataFrame:
+    df = routine_task_intensity.compute_sector(df)
     return df
+
+@task
+def task_routine_task_intensity_compute_subsector(df: pl.DataFrame) -> pl.DataFrame:
+    df = routine_task_intensity.compute_subsector(df)
+    return df
+
+@task
+def task_routine_task_intensity_write_parquet(df: pl.DataFrame, filename: str) -> None:
+    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}{filename}", compression="zstd")
 
 
 @flow()
@@ -39,8 +48,12 @@ def routine_task_intensity_pipeline() -> None:
     df = task_routine_task_intensity_normalize(df)
     df = task_routine_task_intensity_join_industries(df)
     df = task_routine_task_intensity_compute_industry(df)
-    df = task_routine_task_intensity_group_by_subsector(df)
-    print(df.head(10))
+    df_sector = task_routine_task_intensity_compute_sector(df)
+    df_subsector = task_routine_task_intensity_compute_subsector(df)
+    print(df_subsector.head(10))
+    task_routine_task_intensity_write_parquet(df, "routine_task_intensity_industry.parquet")
+    task_routine_task_intensity_write_parquet(df_sector, "routine_task_intensity_sector.parquet")
+    task_routine_task_intensity_write_parquet(df_subsector, "routine_task_intensity_subsector.parquet")
     return 
 
 if __name__ == "__main__":
