@@ -25,12 +25,19 @@ def normalize(df: pl.DataFrame) -> pl.DataFrame:
 def join_industries(df: pl.DataFrame) -> pl.DataFrame:
 
     df_industries = _read_industries_parquet()
+    
+    columns = [
+        "occupation_code", "industry_code", "sector_code", "subsector_code", "industry_group_code", "naics_industry_code",
+        "industry_title", "sector_title", "subsector_title",
+        "2023_percent_of_industry", "2033_percent_of_industry",
+        "r_cog", "r_man", "offshor"
+    ]
 
     df = df.join(
         df_industries,
         on="occupation_code",
         how="left"
-    )
+    ).select(columns)
 
     return df
 
