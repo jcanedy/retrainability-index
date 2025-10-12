@@ -6,6 +6,7 @@ into memory (DataFrame, list of dicts, etc.).
 from pathlib import Path
 from typing import Any
 import polars as pl
+import pandas as pd
 
 def read_csv(
     path: str | Path,
@@ -32,3 +33,11 @@ def read_excel(
 ) -> pl.DataFrame:
     """Read an Excel file into a Polars DataFrame."""
     return pl.read_excel(path, **kwargs)
+
+def read_stata(
+    path: str | Path,
+    **kwargs: Any
+) -> pl.DataFrame:
+    """Read a Stata file into a Polars DataFrame."""
+    df = pd.read_stata(path, **kwargs)
+    return pl.from_pandas(df)

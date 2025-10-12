@@ -24,7 +24,7 @@ def task_occupations_melt_occupation_levels(df: pl.DataFrame) -> pl.DataFrame:
 
 @task
 def task_occupation_write(df: pl.DataFrame):
-    writers.write_csv(df, f"{DATA_OUTPUT_PATH}workforce_boards.csv")
+    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}occupations.parquet", compression="zstd")
     return 
 
 

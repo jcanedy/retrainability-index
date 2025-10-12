@@ -41,7 +41,8 @@ def melt_occupation_levels(df: pl.DataFrame) -> pl.DataFrame:
         )
         .drop_nulls(subset=["occupation_code"])
         .with_columns(
-            pl.col("occupation_code").str.slice(0, 2).alias("occupation_code_prefix")
+            pl.col("occupation_code").str.slice(0, 2).alias("occupation_code_prefix").cast(pl.String),
+            pl.col("occupation_code").cast(pl.String)
         )
     )
 
