@@ -1,6 +1,11 @@
 import pytest
 import polars as pl
-from pipeline.transform.workforce_development_boards import normalize, filter, join_with_datacommons_variables
+from pipeline.transform.workforce_development_boards import (
+    normalize, 
+    filter, 
+    join_with_datacommons_variables
+)
+
 
 def test_normalize():
     df = pl.DataFrame({
