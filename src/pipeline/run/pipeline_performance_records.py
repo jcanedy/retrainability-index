@@ -8,29 +8,29 @@ DATA_PATH = "data/raw/performance_records/"
 DATA_OUTPUT_PATH = "data/processed/performance_records/"
 
 @task
-def task_performance_records_csv_read() -> dict[str, pl.LazyFrame]:
+def task_performance_records_csv_read(lazy=True) -> dict[str, pl.LazyFrame | pl.DataFrame]:
     dict_performance_records = {}
 
     # WIOA Individual Performance Records (Public Use Data)
-    dict_performance_records["2024"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2024Q3_PUBLIC.csv", lazy=True)
-    dict_performance_records["2023"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2023Q4_PUBLIC.csv", lazy=True)
-    dict_performance_records["2022"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2022Q4_Public.csv", lazy=True)
-    dict_performance_records["2021"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2021Q4_PUBLIC.csv", lazy=True)
-    dict_performance_records["2020"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2020Q4_Public.csv", lazy=True)
-    dict_performance_records["2019"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2019Q4_Public.csv", lazy=True)
-    dict_performance_records["2018"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2018Q4_Public.csv", lazy=True)
-    dict_performance_records["2017"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2017Q4_Public.csv", lazy=True)
+    dict_performance_records["2024"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2024Q3_PUBLIC.csv", lazy=lazy)
+    dict_performance_records["2023"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2023Q4_PUBLIC.csv", lazy=lazy)
+    dict_performance_records["2022"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2022Q4_Public.csv", lazy=lazy)
+    dict_performance_records["2021"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2021Q4_PUBLIC.csv", lazy=lazy)
+    dict_performance_records["2020"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2020Q4_Public.csv", lazy=lazy)
+    dict_performance_records["2019"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2019Q4_Public.csv", lazy=lazy)
+    dict_performance_records["2018"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2018Q4_Public.csv", lazy=lazy)
+    dict_performance_records["2017"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2017Q4_Public.csv", lazy=lazy)
 
     # WIASRD (Public Use Data)
-    dict_performance_records["2015"] = readers.read_csv(f"{DATA_PATH}PublicWIASRD2015Q4.csv", lazy=True)
-    dict_performance_records["2014"] = readers.read_csv(f"{DATA_PATH}PublicWIASRD2014q4.csv", lazy=True)
-    dict_performance_records["2013"] = readers.read_csv(f"{DATA_PATH}PublicWIASRD2013q4.csv", lazy=True)
+    # dict_performance_records["2015"] = readers.read_csv(f"{DATA_PATH}PublicWIASRD2015Q4.csv", lazy=lazy)
+    # dict_performance_records["2014"] = readers.read_csv(f"{DATA_PATH}PublicWIASRD2014q4.csv", lazy=lazy)
+    # dict_performance_records["2013"] = readers.read_csv(f"{DATA_PATH}PublicWIASRD2013q4.csv", lazy=lazy)
     
     return dict_performance_records
 
 
 @task
-def task_performance_records_normalize(dict_lf: dict[str, pl.LazyFrame]) -> pl.LazyFrame:
+def task_performance_records_normalize(dict_lf: dict[str, pl.LazyFrame | pl.DataFrame]) -> pl.LazyFrame | pl.DataFrame:
     dict_lf_normalized = {}
 
     for year, lf in dict_lf.items():
@@ -44,26 +44,41 @@ def task_performance_records_normalize(dict_lf: dict[str, pl.LazyFrame]) -> pl.L
     return lf
 
 @task
-def task_performance_records_compute_additional_columns(lf: pl.LazyFrame) -> pl.LazyFrame:
+def task_compute_inflation_adjusted_wages(lf: pl.LazyFrame | pl.DataFrame) -> pl.LazyFrame | pl.DataFrame:
+
+    lf = performance_records.compute_inflation_adjusted_wages(lf)
+
+    return lf
+
+@task
+def task_performance_records_compute_additional_columns(lf: pl.LazyFrame | pl.DataFrame) -> pl.LazyFrame | pl.DataFrame:
 
     lf = performance_records.compute_industry_code(lf)
     lf = performance_records.compute_subsector_code(lf)
     lf = performance_records.compute_workforce_board_code(lf)
     lf = performance_records.compute_funding_stream(lf)
+    lf = performance_records.compute_mean_wages(lf)
 
     return lf
 
 @task
-def task_performance_records_filter(lf: pl.LazyFrame) -> pl.LazyFrame:
+def task_performance_records_filter(lf: pl.LazyFrame | pl.DataFrame) -> pl.LazyFrame | pl.DataFrame:
 
     lf = performance_records.filter(lf)
 
     return lf
 
 @task
-def task_performance_records_write(lf: pl.LazyFrame) -> pl.DataFrame:
+def task_performance_records_write(lf: pl.LazyFrame | pl.DataFrame) -> pl.DataFrame:
+    
+    @task
+    def task_performance_records_collect(lf: pl.LazyFrame) -> pl.DataFrame:
+        return lf.collect(engine="streaming")
 
-    df = lf.collect(engine="streaming")
+    if (isinstance(lf, pl.LazyFrame)):
+        df = task_performance_records_collect(lf)
+    else:
+        df = lf
     
     writers.write_parquet(df, f"{DATA_OUTPUT_PATH}performance_records.parquet", compression="zstd")
 
@@ -80,18 +95,19 @@ def task_performance_records_write_sample(df: pl.DataFrame) -> pl.DataFrame:
 
 
 @flow
-def main() -> None:
-    dict_performance_records = task_performance_records_csv_read()
+def performance_records_pipeline() -> None:
+    dict_performance_records = task_performance_records_csv_read(lazy=True)
     lf_performance_records = task_performance_records_normalize(dict_performance_records)
+    lf_performance_records = task_compute_inflation_adjusted_wages(lf_performance_records)
     lf_performance_records = task_performance_records_compute_additional_columns(lf_performance_records)
     lf_performance_records = task_performance_records_filter(lf_performance_records)
     df = task_performance_records_write(lf_performance_records)
     df_sample = task_performance_records_write_sample(df)
     
-    print("df: ", df.select(pl.len()))
-    print("df_sample: ", df_sample.select(pl.len()))
+    print("df: ", df.select(pl.len()).item())
+    print("df_sample: ", df_sample.select(pl.len()).item())
 
     return 
 
 if __name__ == "__main__":
-    main.fn()
+    performance_records_pipeline.fn()

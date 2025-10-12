@@ -1,34 +1,13 @@
 import polars as pl
-import numpy as np
+import polars.selectors as cs
 
-def _highest_educational_level_map(value):
-    match value:
-        case v if v <= 12:
-            return 0
-        case v if (v >=13) & (v <= 15):
-            return 4
-        case 16:
-            return 7
-        case 17:
-            return 8
-        case 87:
-            return 1
-        case 88:
-            return 2
-        case 89:
-            return 5
-        case 90:
-            return 5
-        case 91:
-            return 6
-        case 0:
-            return 0
-        case _:
-            return None
+import numpy as np
+from pipeline.extract import readers
 
 NORMALIZATIONS = {
     "2024": lambda lf: (
-        lf.select(
+        lf
+        .select(
             pl.col("PIRL100").alias("unique_id"),
 
             # Demographics Information
@@ -42,7 +21,7 @@ NORMALIZATIONS = {
             # Pre-Program Employment
             pl.col("PIRL403").alias("occupational_code_pre"),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
-            pl.col("PIRL404").alias("industry_code_q2_pre"),
+            pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
             pl.col("PIRL1700").alias("wages_3q_pre"),
             pl.col("PIRL1701").alias("wages_2q_pre"),
@@ -60,9 +39,9 @@ NORMALIZATIONS = {
             pl.col("PIRL1706").alias("wages_4q_post"),
         
             # Program Information
-            pl.col("PIRL108A").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.col("PIRL108B").alias("workforce_board_code_2").cast(pl.Utf8),
-            pl.col("PIRL108C").alias("workforce_board_code_3").cast(pl.Utf8),
+            pl.col("PIRL108A").alias("workforce_board_code_1").cast(pl.String),
+            pl.col("PIRL108B").alias("workforce_board_code_2").cast(pl.String),
+            pl.col("PIRL108C").alias("workforce_board_code_3").cast(pl.String),
             pl.col("CALC4000").alias("state"),
             (pl.col("CALC4001") == 1).alias("is_adult"),
             ((pl.col("CALC4002") == 1) | (pl.col("CALC4004") == 1)).alias("is_dislocated_worker"),
@@ -71,11 +50,11 @@ NORMALIZATIONS = {
             ((pl.col("CALC4006") == 1)).alias("is_reportable_individual"),
             (pl.col("PIRL1300") == 1).alias("received_training"),
             pl.col("PIRL900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("entry_date"),
             pl.col("PIRL901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
         )
@@ -106,7 +85,7 @@ NORMALIZATIONS = {
             # Pre-Program Employment
             pl.col("PIRL403").alias("occupational_code_pre"),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
-            pl.col("PIRL404").alias("industry_code_q2_pre"),
+            pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
             pl.col("PIRL1700").alias("wages_3q_pre"),
             pl.col("PIRL1701").alias("wages_2q_pre"),
@@ -124,9 +103,9 @@ NORMALIZATIONS = {
             pl.col("PIRL1706").alias("wages_4q_post"),
             
             # Program Information
-            pl.col("PIRL108A").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.col("PIRL108B").alias("workforce_board_code_2").cast(pl.Utf8),
-            pl.col("PIRL108C").alias("workforce_board_code_3").cast(pl.Utf8),
+            pl.col("PIRL108A").alias("workforce_board_code_1").cast(pl.String),
+            pl.col("PIRL108B").alias("workforce_board_code_2").cast(pl.String),
+            pl.col("PIRL108C").alias("workforce_board_code_3").cast(pl.String),
             pl.col("CALC4000").alias("state"),
             (pl.col("CALC4001") == 1).alias("is_adult"),
             ((pl.col("CALC4002") == 1) | (pl.col("CALC4004") == 1)).alias("is_dislocated_worker"),
@@ -135,11 +114,11 @@ NORMALIZATIONS = {
             ((pl.col("CALC4006") == 1)).alias("is_reportable_individual"),
             (pl.col("PIRL1300") == 1).alias("received_training"),
             pl.col("PIRL900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("entry_date"),
             pl.col("PIRL901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
         )
@@ -169,7 +148,7 @@ NORMALIZATIONS = {
             # Pre-Program Employment
             pl.col("PIRL403").alias("occupational_code_pre"),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
-            pl.col("PIRL404").alias("industry_code_q2_pre"),
+            pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
             pl.col("PIRL1700").alias("wages_3q_pre"),
             pl.col("PIRL1701").alias("wages_2q_pre"),
@@ -187,9 +166,9 @@ NORMALIZATIONS = {
             pl.col("PIRL1706").alias("wages_4q_post"),
             
             # Program Information
-            pl.col("PIRL108A").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.col("PIRL108B").alias("workforce_board_code_2").cast(pl.Utf8),
-            pl.col("PIRL108C").alias("workforce_board_code_3").cast(pl.Utf8),
+            pl.col("PIRL108A").alias("workforce_board_code_1").cast(pl.String),
+            pl.col("PIRL108B").alias("workforce_board_code_2").cast(pl.String),
+            pl.col("PIRL108C").alias("workforce_board_code_3").cast(pl.String),
             pl.col("CALC4000").alias("state"),
             (pl.col("CALC4001") == 1).alias("is_adult"),
             ((pl.col("CALC4002") == 1) | (pl.col("CALC4004") == 1)).alias("is_dislocated_worker"),
@@ -198,11 +177,11 @@ NORMALIZATIONS = {
             ((pl.col("CALC4006") == 1)).alias("is_reportable_individual"),
             (pl.col("PIRL1300") == 1).alias("received_training"),
             pl.col("PIRL900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("entry_date"),
             pl.col("PIRL901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
         )
@@ -232,7 +211,7 @@ NORMALIZATIONS = {
             # Pre-Separation Employment
             pl.col("PIRL403").alias("occupational_code_pre"),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
-            pl.col("PIRL404").alias("industry_code_q2_pre"),
+            pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
             pl.col("PIRL1700").alias("wages_3q_pre"),
             pl.col("PIRL1701").alias("wages_2q_pre"),
@@ -250,9 +229,9 @@ NORMALIZATIONS = {
             pl.col("PIRL1706").alias("wages_4q_post"),
             
             # Program Information
-            pl.col("PIRL108A").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.col("PIRL108B").alias("workforce_board_code_2").cast(pl.Utf8),
-            pl.col("PIRL108C").alias("workforce_board_code_3").cast(pl.Utf8),
+            pl.col("PIRL108A").alias("workforce_board_code_1").cast(pl.String),
+            pl.col("PIRL108B").alias("workforce_board_code_2").cast(pl.String),
+            pl.col("PIRL108C").alias("workforce_board_code_3").cast(pl.String),
             pl.col("PIRL4000").alias("state"),
             (pl.col("PIRL4001") == 1).alias("is_adult"),
             ((pl.col("PIRL4002") == 1) | (pl.col("PIRL4004") == 1)).alias("is_dislocated_worker"),
@@ -261,11 +240,11 @@ NORMALIZATIONS = {
             ((pl.col("PIRL4006") == 1)).alias("is_reportable_individual"),
             (pl.col("PIRL1300") == 1).alias("received_training"),
             pl.col("PIRL900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("entry_date"),
             pl.col("PIRL901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
         )
@@ -295,7 +274,7 @@ NORMALIZATIONS = {
             # Pre-Separation Employment
             pl.col("PIRL403").alias("occupational_code_pre").cast(pl.Int64),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
-            pl.col("PIRL404").alias("industry_code_q2_pre"),
+            pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
             pl.col("PIRL1700").alias("wages_3q_pre"),
             pl.col("PIRL1701").alias("wages_2q_pre"),
@@ -313,9 +292,9 @@ NORMALIZATIONS = {
             pl.col("PIRL1706").alias("wages_4q_post"),
             
             # Program Information
-            pl.col("PIRL108-A").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.col("PIRL108-B").alias("workforce_board_code_2").cast(pl.Utf8),
-            pl.col("PIRL108-C").alias("workforce_board_code_3").cast(pl.Utf8),
+            pl.col("PIRL108-A").alias("workforce_board_code_1").cast(pl.String),
+            pl.col("PIRL108-B").alias("workforce_board_code_2").cast(pl.String),
+            pl.col("PIRL108-C").alias("workforce_board_code_3").cast(pl.String),
             pl.col("PIRL3000").alias("state"),
             (pl.col("PIRL3001") == 1).alias("is_adult"),
             ((pl.col("PIRL3002") == 1) | (pl.col("PIRL3004") == 1)).alias("is_dislocated_worker"),
@@ -324,11 +303,11 @@ NORMALIZATIONS = {
             ((pl.col("PIRL3006") == 1)).alias("is_reportable_individual"),
             (pl.col("PIRL1300") == 1).alias("received_training"),
             pl.col("PIRL900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("entry_date"),
             pl.col("PIRL901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
         )
@@ -358,7 +337,7 @@ NORMALIZATIONS = {
             # Pre-Separation Employment
             pl.col("PIRL403").alias("occupational_code_pre").cast(pl.Int64),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
-            pl.col("PIRL404").alias("industry_code_q2_pre"),
+            pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
             pl.col("PIRL1700").alias("wages_3q_pre"),
             pl.col("PIRL1701").alias("wages_2q_pre"),
@@ -376,9 +355,9 @@ NORMALIZATIONS = {
             pl.col("PIRL1706").alias("wages_4q_post"),
             
             # Program Information
-            pl.col("PIRL108-A").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.col("PIRL108-B").alias("workforce_board_code_2").cast(pl.Utf8),
-            pl.col("PIRL108-C").alias("workforce_board_code_3").cast(pl.Utf8),
+            pl.col("PIRL108-A").alias("workforce_board_code_1").cast(pl.String),
+            pl.col("PIRL108-B").alias("workforce_board_code_2").cast(pl.String),
+            pl.col("PIRL108-C").alias("workforce_board_code_3").cast(pl.String),
             pl.col("PIRL 3000").alias("state"),
             (pl.col("PIRL 3001") == 1).alias("is_adult"),
             ((pl.col("PIRL 3002") == 1) | (pl.col("PIRL 3004") == 1)).alias("is_dislocated_worker"),
@@ -387,11 +366,11 @@ NORMALIZATIONS = {
             ((pl.col("PIRL 3006") == 1)).alias("is_reportable_individual"),
             (pl.col("PIRL1300") == 1).alias("received_training"),
             pl.col("PIRL900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("entry_date"),
             pl.col("PIRL901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
         )
@@ -421,7 +400,7 @@ NORMALIZATIONS = {
             # Pre-Separation Employment
             pl.col("PIRL403").alias("occupational_code_pre").cast(pl.Int64),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
-            pl.col("PIRL404").alias("industry_code_q2_pre"),
+            pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
             pl.col("PIRL1700").alias("wages_3q_pre"),
             pl.col("PIRL1701").alias("wages_2q_pre"),
@@ -439,9 +418,9 @@ NORMALIZATIONS = {
             pl.col("PIRL1706").alias("wages_4q_post"),
             
             # Program Information
-            pl.col("PIRL108-A").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.col("PIRL108-B").alias("workforce_board_code_2").cast(pl.Utf8),
-            pl.col("PIRL108-C").alias("workforce_board_code_3").cast(pl.Utf8),
+            pl.col("PIRL108-A").alias("workforce_board_code_1").cast(pl.String),
+            pl.col("PIRL108-B").alias("workforce_board_code_2").cast(pl.String),
+            pl.col("PIRL108-C").alias("workforce_board_code_3").cast(pl.String),
             pl.col("PIRL 3000").alias("state"),
             (pl.col("PIRL 3001") == 1).alias("is_adult"),
             ((pl.col("PIRL 3002") == 1) | (pl.col("PIRL 3004") == 1)).alias("is_dislocated_worker"),
@@ -450,11 +429,11 @@ NORMALIZATIONS = {
             ((pl.col("PIRL 3006") == 1)).alias("is_reportable_individual"),
             (pl.col("PIRL1300") == 1).alias("received_training"),
             pl.col("PIRL900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("entry_date"),
             pl.col("PIRL901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
         )
@@ -484,7 +463,7 @@ NORMALIZATIONS = {
             # Pre-Separation Employment
             pl.col("PIRL 403").alias("occupational_code_pre").cast(pl.Int64),
             pl.col("PIRL 404").alias("industry_code_q1_pre"),
-            pl.col("PIRL 404").alias("industry_code_q2_pre"),
+            pl.col("PIRL 405").alias("industry_code_q2_pre"),
             pl.col("PIRL 406").alias("industry_code_q3_pre"),
             pl.col("PIRL 1700").alias("wages_3q_pre"),
             pl.col("PIRL 1701").alias("wages_2q_pre"),
@@ -502,9 +481,9 @@ NORMALIZATIONS = {
             pl.col("PIRL 1706").alias("wages_4q_post"),
             
             # Program Information
-            pl.col("PIRL 108-A").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.col("PIRL 108-B").alias("workforce_board_code_2").cast(pl.Utf8),
-            pl.col("PIRL 180-C").alias("workforce_board_code_3").cast(pl.Utf8),
+            pl.col("PIRL 108-A").alias("workforce_board_code_1").cast(pl.String),
+            pl.col("PIRL 108-B").alias("workforce_board_code_2").cast(pl.String),
+            pl.col("PIRL 180-C").alias("workforce_board_code_3").cast(pl.String),
             pl.col("PIRL 3000").alias("state"),
             (pl.col("PIRL 3001") == 1).alias("is_adult"),
             ((pl.col("PIRL 3002") == 1) | (pl.col("PIRL 3004") == 1)).alias("is_dislocated_worker"),
@@ -513,11 +492,11 @@ NORMALIZATIONS = {
             ((pl.col("PIRL 3006") == 1)).alias("is_reportable_individual"),
             (pl.col("PIRL 1300") == 1).alias("received_training"),
             pl.col("PIRL 900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("entry_date"),
             pl.col("PIRL 901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
         )
@@ -566,9 +545,9 @@ NORMALIZATIONS = {
             pl.col("Item_1606").alias("wages_4q_post").cast(pl.Int64),
 
             # Program Information
-            pl.col("Item_105").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.lit(None).alias("workforce_board_code_2").cast(pl.Utf8), # Secondary workforce board code was not reported in WIA
-            pl.lit(None).alias("workforce_board_code_3").cast(pl.Utf8), # Tertiary workforce board code was not reported in WIA
+            pl.col("Item_105").alias("workforce_board_code_1").cast(pl.String),
+            pl.lit(None).alias("workforce_board_code_2").cast(pl.String), # Secondary workforce board code was not reported in WIA
+            pl.lit(None).alias("workforce_board_code_3").cast(pl.String), # Tertiary workforce board code was not reported in WIA
             pl.col("Item_3002").alias("state"),
             (pl.col("Item_3007") == 1).alias("is_adult"),
             ((pl.col("Item_3008") == 1) | (pl.col("Item_3009") == 1) | (pl.col("Item_3010") == 1)).alias("is_dislocated_worker"),
@@ -577,11 +556,11 @@ NORMALIZATIONS = {
             (pl.col("Item_3013") == 0).alias("is_reportable_individual"),
             (pl.col("Item_3014") == 1).alias("received_training"),
             pl.col("Item_900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%m/%d/%Y")
                 .alias("entry_date"),
             pl.col("Item_901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%m/%d/%Y")
                 .alias("exit_date"),
         )
@@ -629,9 +608,9 @@ NORMALIZATIONS = {
             pl.col("Item_1606").alias("wages_4q_post").cast(pl.Int64, strict=False),
 
             # Program Information
-            pl.col("Item_105").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.lit(None).alias("workforce_board_code_2").cast(pl.Utf8), # Secondary workforce board code was not reported in WIA
-            pl.lit(None).alias("workforce_board_code_3").cast(pl.Utf8), # Tertiary workforce board code was not reported in WIA
+            pl.col("Item_105").alias("workforce_board_code_1").cast(pl.String),
+            pl.lit(None).alias("workforce_board_code_2").cast(pl.String), # Secondary workforce board code was not reported in WIA
+            pl.lit(None).alias("workforce_board_code_3").cast(pl.String), # Tertiary workforce board code was not reported in WIA
             pl.col("Item_3002").alias("state"),
             (pl.col("Item_3007") == 1).alias("is_adult"),
             ((pl.col("Item_3008") == 1) | (pl.col("Item_3009") == 1) | (pl.col("Item_3010") == 1)).alias("is_dislocated_worker"),
@@ -640,11 +619,11 @@ NORMALIZATIONS = {
             (pl.col("Item_3013") == "0").alias("is_reportable_individual"),
             (pl.col("Item_3014") == "1").alias("received_training"),
             pl.col("Item_900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%m/%d/%Y", strict=False)
                 .alias("entry_date"),
             pl.col("Item_901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%m/%d/%Y", strict=False)
                 .alias("exit_date"),
         )
@@ -692,9 +671,9 @@ NORMALIZATIONS = {
             pl.col("Item_1606").alias("wages_4q_post").cast(pl.Int64, strict=False),
 
             # Program Information
-            pl.col("Item_105").alias("workforce_board_code_1").cast(pl.Utf8),
-            pl.lit(None).alias("workforce_board_code_2").cast(pl.Utf8), # Secondary workforce board code was not reported in WIA
-            pl.lit(None).alias("workforce_board_code_3").cast(pl.Utf8), # Tertiary workforce board code was not reported in WIA
+            pl.col("Item_105").alias("workforce_board_code_1").cast(pl.String),
+            pl.lit(None).alias("workforce_board_code_2").cast(pl.String), # Secondary workforce board code was not reported in WIA
+            pl.lit(None).alias("workforce_board_code_3").cast(pl.String), # Tertiary workforce board code was not reported in WIA
             pl.col("Item_3002").alias("state"),
             (pl.col("Item_3007") == 1).alias("is_adult"),
             ((pl.col("Item_3008") == 1) | (pl.col("Item_3009") == 1) | (pl.col("Item_3010") == 1)).alias("is_dislocated_worker"),
@@ -703,11 +682,11 @@ NORMALIZATIONS = {
             (pl.col("Item_3013") == "0").alias("is_reportable_individual"),
             (pl.col("Item_3014") == "1").alias("received_training"),
             pl.col("Item_900")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%m/%d/%Y", strict=False)
                 .alias("entry_date"),
             pl.col("Item_901")
-                .cast(pl.Utf8)
+                .cast(pl.String)
                 .str.strptime(pl.Date, "%m/%d/%Y", strict=False)
                 .alias("exit_date"),
         )
@@ -724,11 +703,52 @@ NORMALIZATIONS = {
     )
 }
 
+DF_CPI = readers.read_parquet("data/processed/consumer_price_index/consumer_price_index.parquet")
+
+def _highest_educational_level_map(value):
+    match value:
+        case v if v <= 12:
+            return 0
+        case v if (v >=13) & (v <= 15):
+            return 4
+        case 16:
+            return 7
+        case 17:
+            return 8
+        case 87:
+            return 1
+        case 88:
+            return 2
+        case 89:
+            return 5
+        case 90:
+            return 5
+        case 91:
+            return 6
+        case 0:
+            return 0
+        case _:
+            return None
+
 def normalize(lf: pl.LazyFrame, year: str) -> pl.LazyFrame:
     if year not in NORMALIZATIONS:
         raise ValueError(f"No transform defined for year {year}")
 
-    return NORMALIZATIONS[year](lf)
+    lf = NORMALIZATIONS[year](lf)
+
+    lf = lf.with_columns(
+        pl.col("industry_code_q1_pre").cast(pl.String),
+        pl.col("industry_code_q2_pre").cast(pl.String),
+        pl.col("industry_code_q3_pre").cast(pl.String),
+        pl.col("industry_code_q1_post").cast(pl.String),
+        pl.col("industry_code_q2_post").cast(pl.String),
+        pl.col("industry_code_q3_post").cast(pl.String),
+        pl.col("industry_code_q4_post").cast(pl.String),
+        pl.col("occupational_code_pre").cast(pl.String),
+        pl.col("occupational_code_post").cast(pl.String),
+    )
+
+    return lf
 
 def compute_industry_code(lf: pl.LazyFrame) -> pl.LazyFrame: 
     """Compute the pre- and post-program industry code by coalescing 
@@ -759,6 +779,24 @@ def compute_workforce_board_code(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("workforce_board_code_2"),
             pl.col("workforce_board_code_3"),
         ).alias("workforce_board_code"),
+    )
+
+    return lf
+
+def compute_mean_wages(lf: pl.LazyFrame) -> pl.LazyFrame:
+
+    lf = lf.with_columns(
+        pl.mean_horizontal(
+            "wages_1q_post",
+            "wages_2q_post",
+            "wages_3q_post",
+            "wages_4q_post"
+        ).alias("wages_mean_post").cast(pl.Int64),
+        pl.mean_horizontal(
+            "wages_1q_pre",
+            "wages_2q_pre",
+            "wages_3q_pre",
+        ).alias("wages_mean_pre").cast(pl.Int64),
     )
 
     return lf
@@ -801,40 +839,67 @@ def compute_funding_stream(lf: pl.LazyFrame) -> pl.LazyFrame:
 
     return lf
 
-def _convert_industry_to_subsector_code(code):
-    """
-    Formats a numeric industry code by converting it to a 6-digit string 
-    with the first 3 digits preserved and the last 3 set to '000'.
-
-    If the input is NaN, it is returned unchanged.
-
-    Parameters:
-        code (float or int): The industry code to format.
-
-    Returns:
-        str or float: The formatted industry code as a string, or the original NaN.
-    """
-    if np.isnan(code):
-        return code
-    else:
-        # Convert code to string
-        code = str(code).split('.')[0]
-        
-        # Get first 3 digits and pad with zeros
-        code = code[:3].ljust(6, "0")
-        return code
-
-
 def compute_subsector_code(lf: pl.LazyFrame) -> pl.LazyFrame:
-    """ Compute pre- and post-subsector code based on industry code."""
+    """Compute pre- and post-subsector code based on industry code (vectorized)."""
 
-    lf = lf.with_columns(
-        pl.col("industry_code_pre")
-        .map_elements(_convert_industry_to_subsector_code, return_dtype=pl.String)
-        .alias("subsector_code_pre"), 
-        pl.col("industry_code_post")
-        .map_elements(_convert_industry_to_subsector_code, return_dtype=pl.String)
-        .alias("subsector_code_post")
+    def to_subsector(col: str) -> pl.Expr:
+        return (
+            pl.col(col)
+            .cast(pl.Int64, strict=False)   # 1234.0 -> 1234; NaN -> null
+            .cast(pl.Utf8)                  # "1234"
+            .str.slice(0, 3)                # first 3 digits
+            .str.pad_end(6, "0")            # pad to 6 with zeros
+        )
+
+    return lf.with_columns(
+        to_subsector("industry_code_pre").alias("subsector_code_pre"),
+        to_subsector("industry_code_post").alias("subsector_code_post"),
+    )
+
+def compute_inflation_adjusted_wages(
+    lf: pl.LazyFrame | pl.DataFrame,
+    df_cpi: pl.DataFrame = DF_CPI,
+    reference_year: int = 2010
+) -> pl.LazyFrame | pl.DataFrame:
+
+    # compute the reference CPI once (eager scalar)
+    reference_cpi = (
+        df_cpi
+        .filter(pl.col("year") == reference_year)
+        .select("annual")
+        .item()
+    )
+
+    # per-year ratio
+    ratios = (
+        df_cpi
+        .select(
+            pl.col("year"),
+            (pl.lit(reference_cpi) / pl.col("annual")).cast(pl.Float64).alias("ratio")
+        )
+    )
+
+    # Convert to LazyFrame if lf is a LazyFrame
+    ratios = ratios.lazy() if isinstance(lf, pl.LazyFrame) else ratios
+
+    # join the ratio twice: once for exit_year and once for entry_year
+    lf = (
+        lf
+        .join(
+            ratios.rename({"year": "exit_year", "ratio": "inflation_ratio_exit"}),
+            on="exit_year",
+            how="left",
+        )
+        .join(
+            ratios.rename({"year": "entry_year", "ratio": "inflation_ratio_entry"}),
+            on="entry_year",
+            how="left",
+        )
+        # multiply using selectors perserving original column names
+        .with_columns(
+            (cs.contains(r"^wages_\dq+_post$") * pl.col("inflation_ratio_exit")),
+            (cs.contains(r"^wages_\dq+_pre$")  * pl.col("inflation_ratio_entry")),
+        )
     )
 
     return lf
@@ -856,7 +921,14 @@ def filter(lf: pl.LazyFrame) -> pl.LazyFrame:
                     "industry_code_q4_post",
                     "workforce_board_code_1", 
                     "workforce_board_code_2",
-                    "workforce_board_code_3"
+                    "workforce_board_code_3",
+                    "wages_1q_post",
+                    "wages_2q_post",
+                    "wages_3q_post",
+                    "wages_4q_post",
+                    "wages_1q_pre",
+                    "wages_2q_pre",
+                    "wages_3q_pre"
                 ]).is_null()),
             pl.col("is_adult") | pl.col("is_dislocated_worker") | pl.col("is_youth") | pl.col("is_wagner_peyser"),
         )
