@@ -49,7 +49,7 @@ def task_industries_write_parquet(df: pl.DataFrame, filename: str) -> None:
     writers.write_parquet(df, f"{DATA_OUTPUT_PATH}{filename}", compression="zstd")
 
 @flow
-def occupations_pipeline() -> None:
+def industries_pipeline() -> None:
     df = task_industries_excel_read()
     df = task_industries_normalize(df)
     df_sector = task_industries_filter_to_sector(df)
@@ -68,4 +68,4 @@ def occupations_pipeline() -> None:
     return
 
 if __name__ == "__main__":
-    occupations_pipeline.fn()
+    industries_pipeline.fn()
