@@ -202,8 +202,11 @@ def group(df: pl.DataFrame) -> pl.DataFrame:
             pl.col("population_per_sqkm").mean(),
             pl.col("median_age").mean(),
             pl.col("median_income").mean(),
-            pl.col("jurisdiction")
+            pl.col("jurisdiction").count().alias("jurisdiction_count")
         ])
+        .with_columns(
+            pl.col("workforce_board_code").cast(pl.String)
+        )
     )
 
     return df_grouped

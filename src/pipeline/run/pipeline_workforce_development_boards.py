@@ -40,13 +40,13 @@ def task_workforce_development_boards_write(df: pl.DataFrame):
     df_grouped = task_workforce_development_boards_group(df)
 
     writers.write_csv(df, "data/processed/workforce_boards/workforce_boards.csv")
-    writers.write_csv(df, "data/processed/workforce_boards/workforce_boards_grouped.csv")
+    writers.write_csv(df_grouped, "data/processed/workforce_boards/workforce_boards_grouped.csv")
 
     return 
 
 
 @flow
-def main() -> None:
+def pipeline_workforce_development_boards() -> None:
     df_workforce_boards = task_workforce_board_excels_read()
     df_workforce_boards = task_workforce_development_boards_normalize(df_workforce_boards)
     df_workforce_boards = task_workforce_development_boards_filter(df_workforce_boards)
@@ -56,4 +56,4 @@ def main() -> None:
     return 
 
 if __name__ == "__main__":
-    main()
+    pipeline_workforce_development_boards()

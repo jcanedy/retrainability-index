@@ -21,10 +21,14 @@ def read_csv(
     return pl.read_csv(path, **kwargs)
 
 def read_parquet(
-    path: str | Path, 
+    path: str | Path,
+    lazy: bool = False,
     **kwargs: Any
 ) -> pl.DataFrame:
     """Read a Parquet dataset."""
+
+    if lazy:
+        return pl.scan_parquet(path, **kwargs)
     return pl.read_parquet(path, **kwargs)
 
 def read_excel(

@@ -799,6 +799,11 @@ def compute_mean_wages(lf: pl.LazyFrame) -> pl.LazyFrame:
         ).alias("wages_mean_pre").cast(pl.Int64),
     )
 
+    lf = lf.with_columns(
+        (pl.col("wages_mean_post") - pl.col("wages_mean_pre"))
+        .alias("wages_mean_diff")
+    )
+
     return lf
 
 def compute_funding_stream(lf: pl.LazyFrame) -> pl.LazyFrame:

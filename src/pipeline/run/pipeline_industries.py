@@ -60,7 +60,6 @@ def industries_pipeline() -> None:
         df_sector, 
         df_subsector
     )
-    print(df_industries.filter(pl.col("sector_title").is_not_null()).head(10))
     task_industries_write_parquet(df_sector, "sectors.parquet")
     task_industries_write_parquet(df_subsector, "subsectors.parquet")
     task_industries_write_parquet(df_industries, "industries.parquet")

@@ -110,4 +110,4 @@ def performance_records_pipeline() -> None:
     return 
 
 if __name__ == "__main__":
-    performance_records_pipeline.fn()
+    performance_records_pipeline()

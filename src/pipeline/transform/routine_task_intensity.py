@@ -17,6 +17,13 @@ def normalize(df: pl.DataFrame) -> pl.DataFrame:
             # Cast to an Int64 to remove the decimal, then convert to a String.
             pl.col("occupation_code").cast(pl.Int64).cast(pl.String)
         )
+        .select([
+            "occupation_code",
+            "r_cog",
+            "r_man",
+            "offshor"
+        ])
+        .unique(subset=["occupation_code"])
     )
 
     return df_normalized

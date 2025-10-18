@@ -119,6 +119,7 @@ def filter_to_sector(df: pl.DataFrame) -> pl.DataFrame:
             pl.col("sector_code"),
             pl.col("sector_title")
         )
+        .unique(subset="sector_code")
     )
 
     return df_filtered
@@ -141,6 +142,7 @@ def filter_to_subsector(df: pl.DataFrame) -> pl.DataFrame:
             pl.col("subsector_code"),
             pl.col("subsector_title")
         )
+        .unique(subset="subsector_code")
     )
 
     return df_filtered
