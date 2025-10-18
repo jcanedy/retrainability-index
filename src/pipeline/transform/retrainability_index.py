@@ -116,11 +116,15 @@ def join_workforce_boards(
         df
         .join(
             df_workforce_boards,
-            left_on=["workforce_board_code", "entry_year"],
-            right_on=["workforce_board_code", "program_year"],
+            on="workforce_board_code",
             how="left"
         )
         .drop(["jurisdiction_count"])
+        .rename({
+            "population_per_sqkm": "workforce_board_population_per_sqkm",
+            "median_age": "workforce_board_median_age",
+            "median_income": "workforce_board_median_income"
+        })
     )
 
     return df

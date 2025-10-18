@@ -10,7 +10,7 @@ DATA_OUTPUT_PATH = "data/processed/retrainability_index/"
 @task
 def task_retrainability_index_read() -> pl.DataFrame | pl.LazyFrame:
     df = readers.read_parquet(
-        f"data/processed/performance_records/performance_records_sample.parquet", 
+        f"data/processed/performance_records/performance_records.parquet", 
         lazy=True
     )
 
@@ -108,7 +108,6 @@ def task_retrainability_index_write(
 @flow()
 def retrainability_index_pipeline() -> None:
     df = task_retrainability_index_read()
-    print("df.shape", df.collect().shape)
     df_occupations = task_retrainability_index_read_occupations()
     df_workforce_boards = task_retrainability_index_read_workforce_boards()
     df_rti_subsector = task_retrainability_index_read_rti_subsector()
@@ -122,13 +121,10 @@ def retrainability_index_pipeline() -> None:
         df_rti_industry,
         df_rti_subsector
     )
-    print("df.shape", df.collect().shape)
+
     df = task_retrainability_index_join_workforce_boards(df, df_workforce_boards)
     df = task_retrainability_index_compute_rti_diff(df)
-    print("df.shape", df.collect().shape)
     df = task_retrainability_index_write(df)
-
-    print(df)
 
     return
 

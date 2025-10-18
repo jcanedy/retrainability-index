@@ -207,6 +207,8 @@ def group(df: pl.DataFrame) -> pl.DataFrame:
         .with_columns(
             pl.col("workforce_board_code").cast(pl.String)
         )
+        .sort(pl.col("program_year"), descending=True)
+        .unique()
     )
 
     return df_grouped
