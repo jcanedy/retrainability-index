@@ -93,6 +93,30 @@ def task_performance_records_write_sample(df: pl.DataFrame) -> pl.DataFrame:
 
     return df_sample
 
+@task
+def task_performance_records_compute_count_by_state(df: pl.LazyFrame | pl.DataFrame) -> pl.LazyFrame | pl.DataFrame:
+    
+    df = (
+        df
+        .group_by(
+            pl.col("state")
+        )
+        .agg(
+            pl.len().alias("count_total")
+        )
+    )
+
+    return df
+
+@task
+def task_performance_records_write_count_by_state(lf: pl.LazyFrame | pl.DataFrame) -> pl.DataFrame:
+    
+    df = lf.collect(engine="streaming")
+
+    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}count_by_state.parquet", compression="zstd")
+
+    return df
+
 
 @flow
 def performance_records_pipeline() -> None:
@@ -100,6 +124,10 @@ def performance_records_pipeline() -> None:
     lf_performance_records = task_performance_records_normalize(dict_performance_records)
     lf_performance_records = task_compute_inflation_adjusted_wages(lf_performance_records)
     lf_performance_records = task_performance_records_compute_additional_columns(lf_performance_records)
+
+    lf_count_by_state = task_performance_records_compute_count_by_state(lf_performance_records)
+    df_count_by_state = task_performance_records_write_count_by_state(lf_count_by_state)
+
     lf_performance_records = task_performance_records_filter(lf_performance_records)
     df = task_performance_records_write(lf_performance_records)
     df_sample = task_performance_records_write_sample(df)
@@ -110,4 +138,4 @@ def performance_records_pipeline() -> None:
     return 
 
 if __name__ == "__main__":
-    performance_records_pipeline()
+    performance_records_pipeline.fn()

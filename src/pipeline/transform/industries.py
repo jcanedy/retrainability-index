@@ -45,6 +45,8 @@ def normalize(df: pl.DataFrame) -> pl.DataFrame:
             "Industry title": "industry_title",
             "Occupation type": "occupation_type",
             "Industry type": "industry_type",
+            "2023 Employment": "2023_employment",
+            "2033 Employment": "2033_employment",
             "2023 Percent of Industry": "2023_percent_of_industry",
             "2033 Percent of Industry": "2033_percent_of_industry"
         }
@@ -81,6 +83,8 @@ def normalize(df: pl.DataFrame) -> pl.DataFrame:
         pl.col("naics_industry_code"),
         pl.col("industry_title"),
         pl.col("occupation_code"),
+        pl.col("2023_employment"),
+        pl.col("2033_employment"),
         pl.col("2023_percent_of_industry"),
         pl.col("2033_percent_of_industry")
     )

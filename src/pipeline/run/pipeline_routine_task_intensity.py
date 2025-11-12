@@ -39,7 +39,7 @@ def task_routine_task_intensity_compute_subsector(df: pl.DataFrame) -> pl.DataFr
 
 @task
 def task_routine_task_intensity_write_parquet(df: pl.DataFrame, filename: str) -> None:
-    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}{filename}", compression="zstd")
+    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}{filename}", use_pyarrow=True, compression="zstd")
 
 
 @flow()
@@ -50,8 +50,9 @@ def routine_task_intensity_pipeline() -> None:
     
     df = task_routine_task_intensity_join_industries(df)
     df_industry = task_routine_task_intensity_compute_industry(df)
-    df_sector = task_routine_task_intensity_compute_sector(df_industry)
-    df_subsector = task_routine_task_intensity_compute_subsector(df_industry)
+    df_subsector = task_routine_task_intensity_compute_subsector(df)
+    df_sector = task_routine_task_intensity_compute_sector(df)
+    
     task_routine_task_intensity_write_parquet(df_industry, "routine_task_intensity_industry.parquet")
     task_routine_task_intensity_write_parquet(df_sector, "routine_task_intensity_sector.parquet")
     task_routine_task_intensity_write_parquet(df_subsector, "routine_task_intensity_subsector.parquet")

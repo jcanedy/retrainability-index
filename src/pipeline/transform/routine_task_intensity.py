@@ -5,6 +5,9 @@ def _read_industries_parquet() -> pl.DataFrame:
     df = readers.read_parquet("data/processed/industries/industries.parquet")
     return df
 
+def _read_occupations_parquet() -> pl.DataFrame:
+    df = pl.read_parquet("data/processed/occupations/occupations.parquet")
+    return df
 
 def normalize(df: pl.DataFrame) -> pl.DataFrame:
 
@@ -32,19 +35,31 @@ def normalize(df: pl.DataFrame) -> pl.DataFrame:
 def join_industries(df: pl.DataFrame) -> pl.DataFrame:
 
     df_industries = _read_industries_parquet()
+    df_occupations = _read_occupations_parquet()
     
     columns = [
-        "occupation_code", "industry_code", "sector_code", "subsector_code", "industry_group_code", "naics_industry_code",
+        "occupation_code", "occupation_title", "industry_code", "sector_code", "subsector_code", "industry_group_code", "naics_industry_code",
         "industry_title", "sector_title", "subsector_title",
+        "2023_employment", "2033_employment",
         "2023_percent_of_industry", "2033_percent_of_industry",
         "r_cog", "r_man", "offshor"
     ]
 
-    df = df.join(
-        df_industries,
-        on="occupation_code",
-        how="left"
-    ).select(columns)
+    print("Number of occupation codes: ", df["occupation_code"].n_unique())
+    df = (
+        df_industries.join(
+            df,
+            on="occupation_code",
+            how="inner"
+        )
+        .join(
+            df_occupations,
+            on="occupation_code",
+            how="inner"
+        )
+        .select(columns)
+    )
+    print("Number of occupation codes: ", df["occupation_code"].n_unique())
 
     return df
 
@@ -75,7 +90,7 @@ def compute_industry(df: pl.DataFrame) -> pl.DataFrame:
         .agg(
             pl.col("r_cog_industry").sum(),
             pl.col("r_man_industry").sum(),
-            pl.col("offshor_industry").sum()
+            pl.col("offshor_industry").sum(),
         )
     )
 
@@ -88,53 +103,100 @@ def compute_industry(df: pl.DataFrame) -> pl.DataFrame:
 
     return df
 
-def compute_sector(df: pl.DataFrame) -> pl.DataFrame:
-    """Computes the sector-level routine task intensity 
-    by taking the mean of the industry-level routine task intensity."""
+def compute_subsector(df: pl.DataFrame, top_k: int = 10) -> pl.DataFrame:
+
+    # Normalize the percent of occupation by subsector
+    # So that within an subsector, all remaining occupations sum to 1
+    df = df.with_columns(
+        (pl.col("2023_employment") / 
+        pl.col("2023_employment").sum().over("subsector_code"))
+        .alias("2023_percent_of_subsector")
+    )
+
+    columns = [
+        "sector_code", "subsector_code",
+        "sector_title", "subsector_title",
+    ]
+
+    # Calculate the subsctor-level routine task intensity measures as a weighted sum
+    df = (
+        df
+        .with_columns(
+            (pl.col("2023_percent_of_subsector") * pl.col("r_cog")).alias("r_cog_subsector"),
+            (pl.col("2023_percent_of_subsector") * pl.col("r_man")).alias("r_man_subsector"),
+            (pl.col("2023_percent_of_subsector") * pl.col("offshor")).alias("offshor_subsector")
+        )
+        .group_by(columns)
+        .agg(
+            pl.col("r_cog_subsector").sum(),
+            pl.col("r_man_subsector").sum(),
+            pl.col("offshor_subsector").sum(),
+              # Top-K occupations + their normalized share (weight)
+              pl.struct([
+                  pl.col("occupation_title"),
+                  pl.col("2023_percent_of_subsector")
+              ])
+              .sort_by(pl.col("2023_percent_of_subsector"), descending=True)
+              .head(top_k)
+              .alias("top_occupation_titles")
+        )
+    )
+
+    # For subsector codes that are repeated, take the mean of the routine task intensity values
+    df = df.group_by(columns).agg(
+        pl.col("r_cog_subsector").mean(),
+        pl.col("r_man_subsector").mean(),
+        pl.col("offshor_subsector").mean(),
+        pl.col("top_occupation_titles").first()  # keep the list
+    ).drop_nulls(columns)
+
+    return df
+
+def compute_sector(df: pl.DataFrame, top_k: int = 10) -> pl.DataFrame:
+
+    # Normalize the percent of occupation by sector
+    # So that within an sector, all remaining occupations sum to 1
+    df = df.with_columns(
+        (pl.col("2023_employment") / 
+        pl.col("2023_employment").sum().over("sector_code"))
+        .alias("2023_percent_of_sector")
+    )
 
     columns = [
         "sector_code",
         "sector_title",
     ]
 
-    # Computes the sector-level routine task intensity by taking the mean
-    # of the industry-level routine task intensity. In the future, it may be more
-    # appropriate to weight the industry-level routine task intensity by the
-    # percentage of jobs the sector it accounts for.
+    # Calculate the sector-level routine task intensity measures as a weighted sum
     df = (
         df
+        .with_columns(
+            (pl.col("2023_percent_of_sector") * pl.col("r_cog")).alias("r_cog_sector"),
+            (pl.col("2023_percent_of_sector") * pl.col("r_man")).alias("r_man_sector"),
+            (pl.col("2023_percent_of_sector") * pl.col("offshor")).alias("offshor_sector")
+        )
         .group_by(columns)
         .agg(
-            pl.col("r_cog_industry").mean().alias("r_cog_sector"),
-            pl.col("r_man_industry").mean().alias("r_man_sector"),
-            pl.col("offshor_industry").mean().alias("offshor_sector")
+            pl.col("r_cog_sector").sum(),
+            pl.col("r_man_sector").sum(),
+            pl.col("offshor_sector").sum(),
+              # Top-K occupations + their normalized share (weight)
+              pl.struct([
+                  pl.col("occupation_title"),
+                  pl.col("2023_percent_of_sector")
+              ])
+              .sort_by(pl.col("2023_percent_of_sector"), descending=True)
+              .head(top_k)
+              .alias("top_occupation_titles")
         )
     )
 
-    return df
-
-
-def compute_subsector(df: pl.DataFrame) -> pl.DataFrame:
-    """Computes the subsector-level routine task intensity 
-    by taking the mean of the industry-level routine task intensity."""
-
-    columns = [
-        "subsector_code", "sector_code",
-        "subsector_title", "sector_title",
-    ]
-
-    # Computes the subsector-level routine task intensity by taking the mean
-    # of the industry-level routine task intensity. In the future, it may be more
-    # appropriate to weight the industry-level routine task intensity by the
-    # percentage of jobs the subsector it accounts for.
-    df = (
-        df
-        .group_by(columns)
-        .agg(
-            pl.col("r_cog_industry").mean().alias("r_cog_subsector"),
-            pl.col("r_man_industry").mean().alias("r_man_subsector"),
-            pl.col("offshor_industry").mean().alias("offshor_subsector")
-        )
-    )
+    # For sector codes that are repeated, take the mean of the routine task intensity values
+    df = df.group_by(columns).agg(
+        pl.col("r_cog_sector").mean(),
+        pl.col("r_man_sector").mean(),
+        pl.col("offshor_sector").mean(),
+        pl.col("top_occupation_titles").first()  # keep the list
+    ).drop_nulls(columns)
 
     return df

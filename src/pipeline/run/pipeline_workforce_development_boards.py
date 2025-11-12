@@ -36,11 +36,32 @@ def task_workforce_development_boards_group(df: pl.DataFrame) -> pl.DataFrame:
     return workforce_development_boards.group(df)
 
 @task
+def task_workforce_development_boards_all_write(df: pl.DataFrame):
+
+    df_grouped = (
+        df
+        .group_by(["program_year", "state", "workforce_board_code"])
+        .agg([
+            pl.col("jurisdiction").count().alias("jurisdiction_count"),
+            pl.col("jurisdiction")
+        ])
+        .with_columns(
+            pl.col("workforce_board_code").cast(pl.String)
+        )
+        .sort(pl.col("program_year"), descending=True)
+        .unique()
+    )
+
+    writers.write_parquet(df_grouped, "data/processed/workforce_boards/workforce_boards_all_grouped.parquet", compression="zstd")
+
+    return
+
+@task
 def task_workforce_development_boards_write(df: pl.DataFrame):
     df_grouped = task_workforce_development_boards_group(df)
 
     writers.write_csv(df, "data/processed/workforce_boards/workforce_boards.csv")
-    writers.write_csv(df_grouped, "data/processed/workforce_boards/workforce_boards_grouped.csv")
+    writers.write_parquet(df_grouped, "data/processed/workforce_boards/workforce_boards_grouped.parquet", compression="zstd")
 
     return 
 
@@ -50,6 +71,9 @@ def pipeline_workforce_development_boards() -> None:
     df_workforce_boards = task_workforce_board_excels_read()
     df_workforce_boards = task_workforce_development_boards_normalize(df_workforce_boards)
     df_workforce_boards = task_workforce_development_boards_filter(df_workforce_boards)
+    
+    task_workforce_development_boards_all_write(df_workforce_boards)
+    
     df_workforce_boards = task_workforce_development_boards_join_with_datacommons_variables(df_workforce_boards)
     task_workforce_development_boards_write(df_workforce_boards)
 
