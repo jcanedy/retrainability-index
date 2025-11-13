@@ -116,7 +116,8 @@ def join_workforce_boards(
         df
         .join(
             df_workforce_boards,
-            on="workforce_board_code",
+            left_on=["workforce_board_code", "entry_year"],
+            right_on=["workforce_board_code", "program_year"],
             how="left"
         )
         .drop(["jurisdiction_count"])

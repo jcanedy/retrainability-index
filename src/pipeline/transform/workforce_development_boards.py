@@ -137,9 +137,6 @@ def filter(df: pl.DataFrame) -> pl.DataFrame:
             pl.col("jurisdiction")
         ])
 
-        # Remove duplicate rows that repeat across program years with same jurisdiction
-        .sort(["program_year", "state"], descending=[True, False])
-        .unique(subset=["workforce_board_code", "state", "jurisdiction"])
         .sort(["program_year", "state"], descending=[True, False])
 
         # Make sure there is 1 jurisdiction per row and combine with state into new column

@@ -132,6 +132,7 @@ def performance_records_pipeline() -> None:
     df = task_performance_records_write(lf_performance_records)
     df_sample = task_performance_records_write_sample(df)
     
+    print("df.columns:", df.columns)
     print("df: ", df.select(pl.len()).item())
     print("df_sample: ", df_sample.select(pl.len()).item())
 

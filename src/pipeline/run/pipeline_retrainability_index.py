@@ -45,8 +45,8 @@ def task_retrainability_index_read_rti_occupation() -> pl.DataFrame | pl.LazyFra
 
 @task
 def task_retrainability_index_read_workforce_boards() -> pl.DataFrame:
-    df = readers.read_csv(
-        f"data/processed/workforce_boards/workforce_boards_grouped.csv",
+    df = readers.read_parquet(
+        f"data/processed/workforce_boards/workforce_boards_grouped.parquet",
         lazy=True
     ).drop([
         "state"
@@ -93,12 +93,19 @@ def task_retrainability_index_join_workforce_boards(
     return df
 
 @task
+def task_retrainability_index_collect(lf: pl.LazyFrame) -> pl.DataFrame:
+
+    df = lf.collect()
+
+    return df
+
+@task
 def task_retrainability_index_write(
     df: pl.LazyFrame | pl.DataFrame
 ) -> pl.LazyFrame | pl.DataFrame:
 
     if isinstance(df, pl.LazyFrame):
-        df = df.collect()
+        df = task_retrainability_index_collect(df)
 
     writers.write_parquet(df, f"{DATA_OUTPUT_PATH}retrainability_index.parquet", compression="zstd")
 
@@ -129,4 +136,4 @@ def retrainability_index_pipeline() -> None:
     return
 
 if __name__ == "__main__":
-    retrainability_index_pipeline.fn()
+    retrainability_index_pipeline()
