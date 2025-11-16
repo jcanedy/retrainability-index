@@ -60,6 +60,7 @@ NORMALIZATIONS = {
                 .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
+            pl.col("CALC4040").alias("program_year"),
         )
         .with_columns(
             pl.col("entry_date").dt.year().alias("entry_year"),
@@ -127,6 +128,7 @@ NORMALIZATIONS = {
                 .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
+            pl.col("CALC4040").alias("program_year"),
         )
         .with_columns(
             pl.col("entry_date").dt.year().alias("entry_year"),
@@ -193,6 +195,7 @@ NORMALIZATIONS = {
                 .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
+            pl.col("CALC4040").alias("program_year"),
         )
         .with_columns(
             pl.col("entry_date").dt.year().alias("entry_year"),
@@ -259,6 +262,7 @@ NORMALIZATIONS = {
                 .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
+            pl.col("PIRL4040").alias("program_year"),
         )
         .with_columns(
             pl.col("entry_date").dt.year().alias("entry_year"),
@@ -325,6 +329,7 @@ NORMALIZATIONS = {
                 .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
+            pl.col("PIRL3043").alias("program_year"),
         )
         .with_columns(
             pl.col("entry_date").dt.year().alias("entry_year"),
@@ -391,6 +396,7 @@ NORMALIZATIONS = {
                 .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
+            pl.col("PIRL 3043").alias("program_year"),
         )
         .with_columns(
             pl.col("entry_date").dt.year().alias("entry_year"),
@@ -457,6 +463,7 @@ NORMALIZATIONS = {
                 .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
+            pl.col("PIRL 3043").alias("program_year"),
         )
         .with_columns(
             pl.col("entry_date").dt.year().alias("entry_year"),
@@ -523,6 +530,7 @@ NORMALIZATIONS = {
                 .cast(pl.String)
                 .str.strptime(pl.Date, "%Y%m%d")
                 .alias("exit_date"),
+            pl.col("PIRL 3043").alias("program_year"),
         )
         .with_columns(
             pl.col("entry_date").dt.year().alias("entry_year"),
@@ -938,30 +946,24 @@ def filter(lf: pl.LazyFrame) -> pl.LazyFrame:
     lf_filtered = (
         lf.filter(
             ~pl.any_horizontal(
-                pl.exclude([
-                    "occupational_code_pre", 
-                    "occupational_code_post", 
-                    "industry_code_q1_pre", 
-                    "industry_code_q2_pre", 
-                    "industry_code_q3_pre", 
-                    "industry_code_q1_post", 
-                    "industry_code_q2_post", 
-                    "industry_code_q3_post", 
-                    "industry_code_q4_post",
-                    "workforce_board_code_1", 
-                    "workforce_board_code_2",
-                    "workforce_board_code_3",
-                    "training_service_1",
-                    "training_service_2",
-                    "training_service_3",
-                    "wages_1q_post",
-                    "wages_2q_post",
-                    "wages_3q_post",
-                    "wages_4q_post",
-                    "wages_1q_pre",
-                    "wages_2q_pre",
-                    "wages_3q_pre"
-                ]).is_null()),
+                pl.col([
+                    "sex",
+                    "race",
+                    "age",
+                    "highest_educational_level",
+                    "low_income_status",
+                    "employment_status",
+                    "state",
+                    "entry_date",
+                    "exit_date",
+                    "program_year",
+                    "wages_mean_post",
+                    "wages_mean_pre",
+                    "wages_mean_diff",
+                    "subsector_code_pre",
+                    "subsector_code_post",
+                ]).is_null()
+            ),
             pl.col("is_adult") | pl.col("is_dislocated_worker") | pl.col("is_youth") | pl.col("is_wagner_peyser"),
         )
     )

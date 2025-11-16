@@ -40,6 +40,12 @@ def task_performance_records_normalize(dict_lf: dict[str, pl.LazyFrame | pl.Data
             print(f"ValueError: {e}")
 
     lf = pl.concat(dict_lf_normalized.values())
+
+    # Ensure there is only one observation per program year with the same participant id
+
+    lf.unique(
+        subset=["unique_id", "program_year"]
+    )
     
     return lf
 
@@ -99,7 +105,8 @@ def task_performance_records_compute_count_by_state(df: pl.LazyFrame | pl.DataFr
     df = (
         df
         .group_by(
-            pl.col("state")
+            pl.col("state"),
+            pl.col("program_year")
         )
         .agg(
             pl.len().alias("count_total")
@@ -109,24 +116,25 @@ def task_performance_records_compute_count_by_state(df: pl.LazyFrame | pl.DataFr
     return df
 
 @task
-def task_performance_records_write_count_by_state(lf: pl.LazyFrame | pl.DataFrame) -> pl.DataFrame:
+def task_performance_records_write_count_by_state(lf: pl.LazyFrame | pl.DataFrame) -> None:
     
-    df = lf.collect(engine="streaming")
+    # df = lf.collect(engine="streaming")
 
-    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}count_by_state.parquet", compression="zstd")
+    writers.write_parquet(lf, f"{DATA_OUTPUT_PATH}count_by_state.parquet", sink=True, compression="zstd")
 
-    return df
+    return
 
 
 @flow
 def performance_records_pipeline() -> None:
     dict_performance_records = task_performance_records_csv_read(lazy=True)
     lf_performance_records = task_performance_records_normalize(dict_performance_records)
-    lf_performance_records = task_compute_inflation_adjusted_wages(lf_performance_records)
-    lf_performance_records = task_performance_records_compute_additional_columns(lf_performance_records)
 
     lf_count_by_state = task_performance_records_compute_count_by_state(lf_performance_records)
     df_count_by_state = task_performance_records_write_count_by_state(lf_count_by_state)
+
+    lf_performance_records = task_compute_inflation_adjusted_wages(lf_performance_records)
+    lf_performance_records = task_performance_records_compute_additional_columns(lf_performance_records)
 
     lf_performance_records = task_performance_records_filter(lf_performance_records)
     df = task_performance_records_write(lf_performance_records)
