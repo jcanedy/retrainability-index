@@ -152,3 +152,29 @@ def compute_routine_task_intensity_diff(
     ])
 
     return df
+
+def compute_index(
+    df: pl.LazyFrame | pl.DataFrame
+) -> pl.LazyFrame | pl.DataFrame:
+
+    cols = ["wages_mean_diff", "diff_r_cog_subsector", "diff_r_man_subsector"]
+
+    df = df.with_columns([
+        (pl.col(c).rank("average") / pl.col(c).len()).alias(f"{c}_rank")
+        for c in cols
+    ])
+
+    df = df.with_columns(
+        (
+        0.5 * pl.col("wages_mean_diff_rank") 
+        + 0.25 * (1 - pl.col("diff_r_cog_subsector_rank")) 
+        + 0.25 * (1 - pl.col("diff_r_man_subsector_rank"))
+        ).alias("index")
+    )
+
+    df = df.with_columns(
+        ((pl.col("index") - pl.col("index").min()) /
+        (pl.col("index").max() - pl.col("index").min()))
+    )
+
+    return df

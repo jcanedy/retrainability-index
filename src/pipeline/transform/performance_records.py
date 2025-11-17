@@ -971,4 +971,4 @@ def filter(lf: pl.LazyFrame) -> pl.LazyFrame:
     return lf_filtered
 
 def sample(df: pl.DataFrame) -> pl.DataFrame:
-    return df.sample(fraction=0.01, with_replacement=False)
+    return df.sample(fraction=0.10, with_replacement=False)
