@@ -60,7 +60,7 @@ def task_workforce_development_boards_all_write(df: pl.DataFrame):
 def task_workforce_development_boards_write(df: pl.DataFrame):
     df_grouped = task_workforce_development_boards_group(df)
 
-    writers.write_csv(df, "data/processed/workforce_boards/workforce_boards.csv")
+    writers.write_parquet(df, "data/processed/workforce_boards/workforce_boards.parquet", compression="zstd")
     writers.write_parquet(df_grouped, "data/processed/workforce_boards/workforce_boards_grouped.parquet", compression="zstd")
 
     return 
