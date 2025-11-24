@@ -43,7 +43,7 @@ def task_workforce_development_boards_all_write(df: pl.DataFrame):
         .group_by(["program_year", "state", "workforce_board_code"])
         .agg([
             pl.col("jurisdiction").count().alias("jurisdiction_count"),
-            pl.col("jurisdiction")
+            pl.col("jurisdiction").alias("jurisdictions")
         ])
         .with_columns(
             pl.col("workforce_board_code").cast(pl.String)

@@ -123,8 +123,16 @@ def join_workforce_boards(
         .drop(["jurisdiction_count"])
         .rename({
             "population_per_sqkm": "workforce_board_population_per_sqkm",
+            "population": "workforce_board_population",
             "median_age": "workforce_board_median_age",
-            "median_income": "workforce_board_median_income"
+            "median_income": "workforce_board_median_income",
+            "unemployment_rate": "workforce_board_unemployment_rate",
+            "diversity_index": "workforce_board_diversity_index",
+            "household_debt_to_income_low": "workforce_board_household_debt_to_income_low",
+            "household_debt_to_income_high": "workforce_board_household_debt_to_income_high",
+            "mean_commuting_time_min": "workforce_board_mean_commuting_time_min",
+            "rucc": "workforce_board_rucc",
+            "jurisdictions": "workforce_board_jurisdictions"
         })
     )
 
@@ -159,22 +167,37 @@ def compute_index(
 
     cols = ["wages_mean_diff", "diff_r_cog_subsector", "diff_r_man_subsector"]
 
-    df = df.with_columns([
-        (pl.col(c).rank("average") / pl.col(c).len()).alias(f"{c}_rank")
-        for c in cols
-    ])
+    # Create a variable that holds the winsorized column expression
+    winsorized_cols = [pl.col(c).clip(
+        lower_bound=pl.col(c).quantile(0.01),
+        upper_bound=pl.col(c).quantile(0.99),
+    ) for c in cols]
+
+    df = (
+        df
+        .with_columns([
+            # Apply Winsorization and Anchored Scaling
+            pl.when(winsorized_col > 0)
+                # Positive values (X > 0): Scale from 0.5 to 1.0
+                .then(0.5 + 0.5 * (winsorized_col / winsorized_col.max()))
+
+            .when(winsorized_col < 0)
+                # Negative values (X < 0): Scale from 0.0 to 0.5
+                .then(0.5 - 0.5 * (winsorized_col / winsorized_col.min()))
+
+            # Zero values (X == 0): Anchor them exactly at 0.5
+            .otherwise(0.5)
+            .alias(f"{c}_normalized")
+            for c, winsorized_col in zip(cols, winsorized_cols)
+        ])
+    )
 
     df = df.with_columns(
         (
-        0.5 * pl.col("wages_mean_diff_rank") 
-        + 0.25 * (1 - pl.col("diff_r_cog_subsector_rank")) 
-        + 0.25 * (1 - pl.col("diff_r_man_subsector_rank"))
+        0.5 * pl.col("wages_mean_diff_normalized")
+        + 0.25 * (1 - pl.col("diff_r_cog_subsector_normalized"))
+        + 0.25 * (1 - pl.col("diff_r_man_subsector_normalized"))
         ).alias("index")
     )
-
-    df = df.with_columns(
-        ((pl.col("index") - pl.col("index").min()) /
-        (pl.col("index").max() - pl.col("index").min()))
-    )
-
+    
     return df

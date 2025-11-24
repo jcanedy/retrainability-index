@@ -205,6 +205,19 @@ def _read_county_average_commute_time() -> pl.DataFrame:
 
     return df
 
+def _read_county_rural_urban_continuum_codes() -> pl.DataFrame:
+    df = read_excel("data/raw/workforce_development_board_codes/county_rural_urban_continuum_codes_2023.xlsx", engine="xlsx2csv")
+
+    df = df.select(
+        pl.format(
+            "geoId/{}", 
+            pl.col("FIPS").cast(pl.String).str.zfill(5)
+        ).alias("dcid"),
+        pl.col("RUCC_2023").alias("rucc")
+    )
+
+    return df
+
 def normalize(df: pl.DataFrame) -> pl.DataFrame:
     """Normalize column names to be snakecase."""
 
@@ -288,6 +301,7 @@ def join_with_datacommons_variables(df: pl.DataFrame, names_to_dcids_override: d
     df_diversity_index = _read_county_diversity_index()
     df_household_debt = _read_county_household_debt()
     df_commute_time = _read_county_average_commute_time()
+    df_rucc = _read_county_rural_urban_continuum_codes()
 
     df_joined = (
         df_joined
@@ -306,6 +320,9 @@ def join_with_datacommons_variables(df: pl.DataFrame, names_to_dcids_override: d
         .join(
             df_commute_time, on=["dcid"], how="left"
         )
+        .join(
+            df_rucc, on=["dcid"], how="left"
+        )
         .group_by([
             "program_year", 
             "state", 
@@ -322,7 +339,8 @@ def join_with_datacommons_variables(df: pl.DataFrame, names_to_dcids_override: d
             pl.col("diversity_index").mean(),
             pl.col("household_debt_to_income_low").mean(),
             pl.col("household_debt_to_income_high").mean(),
-            pl.col("mean_commuting_time_min").mean()
+            pl.col("mean_commuting_time_min").mean(),
+            pl.col("rucc").mean()
         )
         .with_columns(
             (pl.col("population") / pl.col("land_area_sqm") * 1e6)
@@ -347,9 +365,10 @@ def group(df: pl.DataFrame) -> pl.DataFrame:
             pl.col("household_debt_to_income_low").mean(),
             pl.col("household_debt_to_income_high").mean(),
             pl.col("mean_commuting_time_min").mean(),
+            pl.col("rucc").mean(),
             pl.col("population_per_sqkm").mean(),
             pl.col("jurisdiction").count().alias("jurisdiction_count"),
-            pl.col("jurisdiction")
+            pl.col("jurisdiction").alias("jurisdictions")
         ])
         .with_columns(
             pl.col("workforce_board_code").cast(pl.String)
