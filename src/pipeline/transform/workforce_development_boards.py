@@ -368,7 +368,7 @@ def group(df: pl.DataFrame) -> pl.DataFrame:
             pl.col("rucc").mean(),
             pl.col("population_per_sqkm").mean(),
             pl.col("jurisdiction").count().alias("jurisdiction_count"),
-            pl.col("jurisdiction").alias("jurisdictions")
+            pl.col("jurisdiction").sort().alias("jurisdictions")
         ])
         .with_columns(
             pl.col("workforce_board_code").cast(pl.String)
