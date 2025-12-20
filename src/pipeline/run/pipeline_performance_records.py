@@ -5,7 +5,7 @@ from pipeline.transform import performance_records
 from pipeline.load import writers
 
 DATA_PATH = "data/raw/performance_records/"
-DATA_OUTPUT_PATH = "data/processed/performance_records/"
+DATA_OUTPUT_PATH = "temp/processed/performance_records/"
 
 @task
 def task_performance_records_csv_read(lazy=True) -> dict[str, pl.LazyFrame | pl.DataFrame]:
@@ -117,8 +117,6 @@ def task_performance_records_compute_count_by_state(df: pl.LazyFrame | pl.DataFr
 
 @task
 def task_performance_records_write_count_by_state(lf: pl.LazyFrame | pl.DataFrame) -> None:
-    
-    # df = lf.collect(engine="streaming")
 
     writers.write_parquet(lf, f"{DATA_OUTPUT_PATH}count_by_state.parquet", sink=True, compression="zstd")
 
