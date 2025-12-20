@@ -42,8 +42,10 @@ def task_performance_records_normalize(dict_lf: dict[str, pl.LazyFrame | pl.Data
     lf = pl.concat(dict_lf_normalized.values())
 
     # Ensure there is only one observation per program year with the same participant id
+    # This will keep the entry in the most recent Performance Records file.abs
+    # According to WIOA documenation, there should only be 1 unique_id in each program year. 
 
-    lf.unique(
+    lf = lf.unique(
         subset=["unique_id", "program_year"]
     )
     
