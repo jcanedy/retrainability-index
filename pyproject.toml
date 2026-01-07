@@ -7,14 +7,30 @@ requires-python = ">=3.12"
 dependencies = [
     "datacommons-client>=2.1.1",
     "db-dtypes>=1.4.3",
+    "geopandas>=1.1.1",
     "google-cloud-bigquery>=3.35.1",
     "google-cloud-bigquery-storage>=2.32.0",
     "ipykernel>=6.30.0",
     "openpyxl>=3.1.5",
+    "perfect>=0.0.1",
     "plotly>=6.2.0",
     "polars>=1.31.0",
+    "prefect>=3.4.24",
+    "python-dotenv>=1.1.1",
     "scikit-learn>=1.7.1",
     "scipy>=1.16.0",
     "seaborn>=0.13.2",
     "streamlit>=1.47.0",
+    "xlsx2csv>=0.8.4",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[dependency-groups]
+dev = [
+    "fastexcel>=0.16.0",
+    "openpyxl>=3.1.5",
+    "pytest>=8.4.2",
+    "xlsxwriter>=3.2.9",
 ]

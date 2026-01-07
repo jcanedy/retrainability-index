@@ -1,3 +1,8 @@
 .venv
 data/*
-wioa_performance_records/*
+__pycache__/
+*.pyc
+*.egg-info/
+*.pytest_cache/
+.env
+temp/
