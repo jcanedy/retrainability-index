@@ -81,7 +81,8 @@ def join_routine_task_intensity(
             "r_cog_subsector": "r_cog_subsector_pre",
             "r_man_subsector": "r_man_subsector_pre",
             "offshor_subsector": "offshor_subsector_pre",
-            "subsector_title": "subsector_title_pre"
+            "subsector_title": "subsector_title_pre",
+            "subsector_top_occupation_titles": "subsector_top_occupation_titles_pre"
         })
         .drop([
             "sector_code",
@@ -97,7 +98,8 @@ def join_routine_task_intensity(
             "r_cog_subsector": "r_cog_subsector_post",
             "r_man_subsector": "r_man_subsector_post",
             "offshor_subsector": "offshor_subsector_post",
-            "subsector_title": "subsector_title_post"
+            "subsector_title": "subsector_title_post",
+            "subsector_top_occupation_titles": "subsector_top_occupation_titles_post"
         })
         .drop([
             "sector_code",

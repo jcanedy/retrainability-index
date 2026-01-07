@@ -1,4 +1,6 @@
 import polars as pl
+from prefect import get_run_logger
+
 from pipeline.extract import readers
 
 def _read_industries_parquet() -> pl.DataFrame:
@@ -33,6 +35,7 @@ def normalize(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def join_industries(df: pl.DataFrame) -> pl.DataFrame:
+    logger = get_run_logger()
 
     df_industries = _read_industries_parquet()
     df_occupations = _read_occupations_parquet()
@@ -45,7 +48,8 @@ def join_industries(df: pl.DataFrame) -> pl.DataFrame:
         "r_cog", "r_man", "offshor"
     ]
 
-    print("Number of occupation codes: ", df["occupation_code"].n_unique())
+    logger.info(f'Number of occupation codes (before join): {df["occupation_code"].n_unique()}')
+
     df = (
         df_industries.join(
             df,
@@ -59,7 +63,7 @@ def join_industries(df: pl.DataFrame) -> pl.DataFrame:
         )
         .select(columns)
     )
-    print("Number of occupation codes: ", df["occupation_code"].n_unique())
+    logger.info(f'Number of occupation codes (after join): {df["occupation_code"].n_unique()}')
 
     return df
 
@@ -138,7 +142,7 @@ def compute_subsector(df: pl.DataFrame, top_k: int = 10) -> pl.DataFrame:
               ])
               .sort_by(pl.col("2023_percent_of_subsector"), descending=True)
               .head(top_k)
-              .alias("top_occupation_titles")
+              .alias("subsector_top_occupation_titles")
         )
     )
 
@@ -147,7 +151,7 @@ def compute_subsector(df: pl.DataFrame, top_k: int = 10) -> pl.DataFrame:
         pl.col("r_cog_subsector").mean(),
         pl.col("r_man_subsector").mean(),
         pl.col("offshor_subsector").mean(),
-        pl.col("top_occupation_titles").first()  # keep the list
+        pl.col("subsector_top_occupation_titles").first()  # keep the list
     ).drop_nulls(columns)
 
     return df
