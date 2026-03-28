@@ -4,8 +4,7 @@ from pipeline.extract import readers
 from pipeline.transform import industries
 from pipeline.load import writers
 
-DATA_PATH = "data/raw/industries/"
-DATA_OUTPUT_PATH = "data/processed/industries/"
+DATA_PATH = "gs://retrainability-index/raw/industries/"
 
 @task
 def task_industries_excel_read() -> pl.DataFrame:
@@ -45,8 +44,8 @@ def task_industries_join(
     return df
 
 @task
-def task_industries_write_parquet(df: pl.DataFrame, filename: str) -> None:
-    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}{filename}", compression="zstd")
+def task_industries_write_bigquery(df: pl.DataFrame, table: str) -> None:
+    writers.write_bigquery(df, "retraining-index", "staging", table, if_exists="replace")
 
 @flow
 def industries_pipeline() -> None:
@@ -60,9 +59,9 @@ def industries_pipeline() -> None:
         df_sector, 
         df_subsector
     )
-    task_industries_write_parquet(df_sector, "sectors.parquet")
-    task_industries_write_parquet(df_subsector, "subsectors.parquet")
-    task_industries_write_parquet(df_industries, "industries.parquet")
+    task_industries_write_bigquery(df_sector, "sectors")
+    task_industries_write_bigquery(df_subsector, "subsectors")
+    task_industries_write_bigquery(df_industries, "industries")
 
     return
 

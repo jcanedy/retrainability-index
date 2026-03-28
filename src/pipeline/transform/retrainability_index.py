@@ -163,43 +163,70 @@ def compute_routine_task_intensity_diff(
 
     return df
 
-def compute_index(
-    df: pl.LazyFrame | pl.DataFrame
-) -> pl.LazyFrame | pl.DataFrame:
+def _winsorize_and_normalize_pair(
+    df: pl.DataFrame,
+    pre_col: str,
+    post_col: str,
+    out_pre: str,
+    out_post: str,
+) -> pl.DataFrame:
+    """
+    Winsorize and min-max normalize a pre/post column pair on a shared scale.
+    Quantile bounds and min/max are computed across both columns combined.
+    """
+    combined = pl.concat([df[pre_col], df[post_col]])
+    lower = combined.quantile(0.01)
+    upper = combined.quantile(0.99)
 
-    cols = ["wages_mean_diff", "diff_r_cog_subsector", "diff_r_man_subsector"]
-
-    # Create a variable that holds the winsorized column expression
-    winsorized_cols = [pl.col(c).clip(
-        lower_bound=pl.col(c).quantile(0.01),
-        upper_bound=pl.col(c).quantile(0.99),
-    ) for c in cols]
-
-    df = (
-        df
-        .with_columns([
-            # Apply Winsorization and Anchored Scaling
-            pl.when(winsorized_col > 0)
-                # Positive values (X > 0): Scale from 0.5 to 1.0
-                .then(0.5 + 0.5 * (winsorized_col / winsorized_col.max()))
-
-            .when(winsorized_col < 0)
-                # Negative values (X < 0): Scale from 0.0 to 0.5
-                .then(0.5 - 0.5 * (winsorized_col / winsorized_col.min()))
-
-            # Zero values (X == 0): Anchor them exactly at 0.5
-            .otherwise(0.5)
-            .alias(f"{c}_normalized")
-            for c, winsorized_col in zip(cols, winsorized_cols)
-        ])
+    df = df.with_columns(
+        pl.col(pre_col).clip(lower, upper).alias(f"{pre_col}_winsorized"),
+        pl.col(post_col).clip(lower, upper).alias(f"{post_col}_winsorized"),
     )
+
+    combined_min = df.select(
+        pl.concat_list([f"{pre_col}_winsorized", f"{post_col}_winsorized"]).explode()
+    ).min().item()
+    combined_max = df.select(
+        pl.concat_list([f"{pre_col}_winsorized", f"{post_col}_winsorized"]).explode()
+    ).max().item()
+
+    df = df.with_columns(
+        ((pl.col(f"{pre_col}_winsorized") - combined_min) / (combined_max - combined_min)).alias(out_pre),
+        ((pl.col(f"{post_col}_winsorized") - combined_min) / (combined_max - combined_min)).alias(out_post),
+    )
+
+    return df
+
+
+def compute_index(
+    df: pl.DataFrame
+) -> pl.DataFrame:
+
+    pre_cols  = ["wages_mean_pre_ihs", "r_cog_subsector_pre", "r_man_subsector_pre", "r_cog_pre", "r_man_pre"]
+    post_cols = ["wages_mean_post_ihs", "r_cog_subsector_post", "r_man_subsector_post", "r_cog_post", "r_man_post"]
+    norm_pre  = ["wages_mean_pre_ihs_normalized", "r_cog_subsector_pre_normalized", "r_man_subsector_pre_normalized", "r_cog_pre_normalized", "r_man_pre_normalized"]
+    norm_post = ["wages_mean_post_ihs_normalized", "r_cog_subsector_post_normalized", "r_man_subsector_post_normalized", "r_cog_post_normalized", "r_man_post_normalized"]
+    diff_cols = ["wages_mean_ihs_normalized_diff", "r_cog_subsctor_normalized_diff", "r_man_subsctor_normalized_diff", "r_cog_normalized_diff", "r_man_normalized_diff"]
+
+    for pre_c, post_c, out_pre, out_post in zip(pre_cols, post_cols, norm_pre, norm_post):
+        df = _winsorize_and_normalize_pair(df, pre_c, post_c, out_pre, out_post)
+
+    df = df.with_columns([
+        (pl.col(post_c) - pl.col(pre_c)).alias(diff_c)
+        for pre_c, post_c, diff_c in zip(norm_pre, norm_post, diff_cols)
+    ])
 
     df = df.with_columns(
         (
-        0.5 * pl.col("wages_mean_diff_normalized")
-        + 0.25 * (1 - pl.col("diff_r_cog_subsector_normalized"))
-        + 0.25 * (1 - pl.col("diff_r_man_subsector_normalized"))
-        ).alias("index")
+            0.5  * pl.col("wages_mean_ihs_normalized_diff")
+            - 0.25 * pl.col("r_cog_normalized_diff")
+            - 0.25 * pl.col("r_man_normalized_diff")
+        ).alias("index"),
+        (
+            0.5  * pl.col("wages_mean_ihs_normalized_diff")
+            - 0.25 * pl.col("r_cog_subsctor_normalized_diff")
+            - 0.25 * pl.col("r_man_subsctor_normalized_diff")
+        ).alias("index_subsector"),
     )
-    
+
     return df

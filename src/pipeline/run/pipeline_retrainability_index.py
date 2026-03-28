@@ -3,172 +3,90 @@ import polars as pl
 from pipeline.extract import readers
 from pipeline.transform import retrainability_index
 from pipeline.load import writers
-from typing import Literal
 
-DATA_PATH = "data/raw/"
-DATA_OUTPUT_PATH = "data/processed/retrainability_index/"
+PROJECT = "retraining-index"
+DATASET = "staging"
 
-@task
-def task_retrainability_index_read(use_sample: bool = False) -> pl.DataFrame | pl.LazyFrame:
-    """Read performance records data.
-    
-    Args:
-        use_sample: If True, read sample data; if False, read full data
-    """
-    suffix = "_sample" if use_sample else ""
-    df = readers.read_parquet(
-        f"data/processed/performance_records/performance_records{suffix}.parquet", 
-        lazy=True
-    )
+_JOIN_QUERY = f"""
+SELECT
+    pr.*,
+    rti_occ_pre.r_cog        AS r_cog_pre,
+    rti_occ_pre.r_man        AS r_man_pre,
+    rti_occ_pre.offshor      AS offshor_pre,
+    rti_occ_post.r_cog       AS r_cog_post,
+    rti_occ_post.r_man       AS r_man_post,
+    rti_occ_post.offshor     AS offshor_post,
+    rti_ind_pre.r_cog_industry    AS r_cog_industry_pre,
+    rti_ind_pre.r_man_industry    AS r_man_industry_pre,
+    rti_ind_pre.offshor_industry  AS offshor_industry_pre,
+    rti_ind_post.r_cog_industry   AS r_cog_industry_post,
+    rti_ind_post.r_man_industry   AS r_man_industry_post,
+    rti_ind_post.offshor_industry AS offshor_industry_post,
+    rti_sub_pre.r_cog_subsector   AS r_cog_subsector_pre,
+    rti_sub_pre.r_man_subsector   AS r_man_subsector_pre,
+    rti_sub_pre.offshor_subsector AS offshor_subsector_pre,
+    rti_sub_pre.subsector_title   AS subsector_title_pre,
+    rti_sub_post.r_cog_subsector   AS r_cog_subsector_post,
+    rti_sub_post.r_man_subsector   AS r_man_subsector_post,
+    rti_sub_post.offshor_subsector AS offshor_subsector_post,
+    rti_sub_post.subsector_title   AS subsector_title_post,
+    occ_pre.occupation_title        AS occupation_title_pre,
+    occ_post.occupation_title       AS occupation_title_post,
+    wb.population_per_sqkm          AS workforce_board_population_per_sqkm,
+    wb.population                   AS workforce_board_population,
+    wb.median_age                   AS workforce_board_median_age,
+    wb.median_income                AS workforce_board_median_income,
+    wb.unemployment_rate            AS workforce_board_unemployment_rate,
+    wb.diversity_index              AS workforce_board_diversity_index,
+    wb.household_debt_to_income_low  AS workforce_board_household_debt_to_income_low,
+    wb.household_debt_to_income_high AS workforce_board_household_debt_to_income_high,
+    wb.mean_commuting_time_min      AS workforce_board_mean_commuting_time_min,
+    wb.rucc                         AS workforce_board_rucc
+FROM `{PROJECT}.{DATASET}.wioa_performance_records` pr
+LEFT JOIN `{PROJECT}.{DATASET}.routine_task_intensity_occupation` rti_occ_pre
+    ON pr.occupation_code_pre = rti_occ_pre.occupation_code
+LEFT JOIN `{PROJECT}.{DATASET}.routine_task_intensity_occupation` rti_occ_post
+    ON pr.occupation_code_post = rti_occ_post.occupation_code
+LEFT JOIN `{PROJECT}.{DATASET}.routine_task_intensity_industry` rti_ind_pre
+    ON pr.industry_code_pre = rti_ind_pre.industry_code
+LEFT JOIN `{PROJECT}.{DATASET}.routine_task_intensity_industry` rti_ind_post
+    ON pr.industry_code_post = rti_ind_post.industry_code
+LEFT JOIN `{PROJECT}.{DATASET}.routine_task_intensity_subsector` rti_sub_pre
+    ON pr.subsector_code_pre = rti_sub_pre.subsector_code
+LEFT JOIN `{PROJECT}.{DATASET}.routine_task_intensity_subsector` rti_sub_post
+    ON pr.subsector_code_post = rti_sub_post.subsector_code
+LEFT JOIN `{PROJECT}.{DATASET}.occupations` occ_pre
+    ON pr.occupation_code_pre = occ_pre.occupation_code
+LEFT JOIN `{PROJECT}.{DATASET}.occupations` occ_post
+    ON pr.occupation_code_post = occ_post.occupation_code
+LEFT JOIN `{PROJECT}.{DATASET}.workforce_boards_grouped` wb
+    ON CAST(pr.workforce_board_code AS STRING) = CAST(wb.workforce_board_code AS STRING)
+    AND pr.entry_year = wb.program_year
+"""
 
-    return df
-
-@task
-def task_retrainability_index_read_rti_subsector() -> pl.DataFrame | pl.LazyFrame:
-    df = readers.read_parquet(
-        f"data/processed/routine_task_intensity/routine_task_intensity_subsector.parquet",
-        lazy=True
-    )
-
-    return df
-
-@task
-def task_retrainability_index_read_rti_industry() -> pl.DataFrame | pl.LazyFrame:
-    df = readers.read_parquet(
-        f"data/processed/routine_task_intensity/routine_task_intensity_industry.parquet",
-        lazy=True
-    )
-
-    return df
-
-@task
-def task_retrainability_index_read_rti_occupation() -> pl.DataFrame | pl.LazyFrame:
-    df = readers.read_parquet(
-        f"data/processed/routine_task_intensity/routine_task_intensity_occupation.parquet",
-        lazy=True
-    )
-
-    return df
-
-@task
-def task_retrainability_index_read_workforce_boards() -> pl.DataFrame:
-    df = readers.read_parquet(
-        f"data/processed/workforce_boards/workforce_boards_grouped.parquet",
-        lazy=True
-    ).drop([
-        "state"
-    ]).with_columns(pl.col("workforce_board_code").cast(pl.String))
-
-    return df
-
-
-@task
-def task_retrainability_index_read_occupations() -> pl.DataFrame:
-    df = readers.read_parquet(
-        f"data/processed/occupations/occupations.parquet",
-        lazy=True
-    )
-
-    return df
 
 @task
-def task_retrainability_index_compute_rti_diff(df: pl.LazyFrame | pl.DataFrame) -> pl.LazyFrame | pl.DataFrame:
-    return retrainability_index.compute_routine_task_intensity_diff(df)
+def task_retrainability_index_read() -> pl.DataFrame:
+    return readers.read_bigquery(PROJECT, DATASET, table="", query=_JOIN_QUERY)
+
 
 @task
-def task_retrainability_index_compute_index(df: pl.LazyFrame | pl.DataFrame) -> pl.LazyFrame | pl.DataFrame:
+def task_retrainability_index_compute_index(df: pl.DataFrame) -> pl.DataFrame:
     return retrainability_index.compute_index(df)
 
-@task
-def task_retrainability_index_join_rti(
-    df: pl.LazyFrame | pl.DataFrame,
-    df_rti_occupation: pl.LazyFrame | pl.DataFrame,
-    df_rti_industry: pl.LazyFrame | pl.DataFrame,
-    df_rti_subsector: pl.LazyFrame | pl.DataFrame
-):
-    df = retrainability_index.join_routine_task_intensity(
-        df,
-        df_rti_occupation,
-        df_rti_industry,
-        df_rti_subsector
-    )
-
-    return df
 
 @task
-def task_retrainability_index_join_workforce_boards(
-   df: pl.DataFrame | pl.LazyFrame,
-   df_workforce_boards: pl.DataFrame | pl.LazyFrame 
-):
-    df = retrainability_index.join_workforce_boards(df, df_workforce_boards)
-    return df
-
-@task
-def task_retrainability_index_collect(lf: pl.LazyFrame) -> pl.DataFrame:
-
-    df = lf.collect()
-
-    return df
-
-@task
-def task_retrainability_index_write(
-    df: pl.LazyFrame | pl.DataFrame,
-    use_sample: bool = False
-) -> pl.LazyFrame | pl.DataFrame:
-    """Write retrainability index data.
-    
-    Args:
-        df: DataFrame to write
-        use_sample: If True, save with '_sample' suffix; if False, save without suffix
-    """
-
-    if isinstance(df, pl.LazyFrame):
-        df = task_retrainability_index_collect(df)
-
-    suffix = "_sample" if use_sample else ""
-    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}retrainability_index{suffix}.parquet", compression="zstd")
-
-    return df
+def task_retrainability_index_write(df: pl.DataFrame) -> None:
+    writers.write_bigquery(df, PROJECT, DATASET, "wioa_retrainability_index", if_exists="replace", sink=True)
 
 
 @flow()
-def retrainability_index_pipeline(use_sample: bool = False) -> None:
-    """Run the retrainability index pipeline.
-    
-    Args:
-        use_sample: If True, process sample data and save with '_sample' suffix;
-                   if False, process full data and save without suffix
-    """
-    df = task_retrainability_index_read(use_sample=use_sample)
-    df_occupations = task_retrainability_index_read_occupations()
-    df_workforce_boards = task_retrainability_index_read_workforce_boards()
-    df_rti_subsector = task_retrainability_index_read_rti_subsector()
-    df_rti_industry = task_retrainability_index_read_rti_industry()
-    df_rti_occupation = task_retrainability_index_read_rti_occupation()
-
-    df = task_retrainability_index_join_rti(
-        df,
-        df_rti_occupation,
-        df_rti_industry,
-        df_rti_subsector
-    )
-
-    df = task_retrainability_index_join_workforce_boards(df, df_workforce_boards)
-    df = task_retrainability_index_compute_rti_diff(df)
+def retrainability_index_pipeline() -> None:
+    df = task_retrainability_index_read()
     df = task_retrainability_index_compute_index(df)
-    df = task_retrainability_index_write(df, use_sample=use_sample)
+    task_retrainability_index_write(df)
 
     return
 
 if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description='Run retrainability index pipeline')
-    parser.add_argument(
-        '--use-sample', 
-        action='store_true',
-        help='Use sample data (with _sample suffix) instead of full data'
-    )
-    args = parser.parse_args()
-    
-    retrainability_index_pipeline(use_sample=args.use_sample)
+    retrainability_index_pipeline()

@@ -4,8 +4,7 @@ from pipeline.extract import readers
 from pipeline.transform import occupations
 from pipeline.load import writers
 
-DATA_PATH = "data/raw/occupations/"
-DATA_OUTPUT_PATH = "data/processed/occupations/"
+DATA_PATH = "gs://retrainability-index/raw/occupations/"
 
 @task
 def task_occupations_csv_read() -> pl.DataFrame:
@@ -24,8 +23,8 @@ def task_occupations_melt_occupation_levels(df: pl.DataFrame) -> pl.DataFrame:
 
 @task
 def task_occupation_write(df: pl.DataFrame):
-    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}occupations.parquet", compression="zstd")
-    return 
+    writers.write_bigquery(df, "retraining-index", "staging", "occupations", if_exists="replace")
+    return
 
 
 @flow()

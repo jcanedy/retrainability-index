@@ -4,8 +4,7 @@ from pipeline.extract import readers
 from pipeline.transform import consumer_price_index
 from pipeline.load import writers
 
-DATA_PATH = "data/raw/consumer_price_index/"
-DATA_OUTPUT_PATH = "data/processed/consumer_price_index/"
+DATA_PATH = "gs://retrainability-index/raw/consumer_price_index/"
 
 @task
 def task_consumer_price_index_excel_read() -> pl.DataFrame:
@@ -19,14 +18,14 @@ def task_consumer_price_index_normalize(df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 @task
-def task_consumer_price_index_write(df: pl.DataFrame, filename: str) -> None:
-    writers.write_parquet(df, f"{DATA_OUTPUT_PATH}{filename}")
+def task_consumer_price_index_write(df: pl.DataFrame) -> None:
+    writers.write_bigquery(df, "retraining-index", "staging", "consumer_price_index", if_exists="replace")
 
 @flow
 def consumer_price_index_pipeline() -> None:
     df = task_consumer_price_index_excel_read()
     df = task_consumer_price_index_normalize(df)
-    task_consumer_price_index_write(df, "consumer_price_index.parquet")
+    task_consumer_price_index_write(df)
 
     return
 

@@ -19,7 +19,7 @@ NORMALIZATIONS = {
             pl.col("PIRL400").alias("employment_status"),
 
             # Pre-Program Employment
-            pl.col("PIRL403").alias("occupational_code_pre"),
+            pl.col("PIRL403").alias("occupation_code_pre"),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
             pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
@@ -28,7 +28,7 @@ NORMALIZATIONS = {
             pl.col("PIRL1702").alias("wages_1q_pre"),
 
             # Post-Program Employment
-            pl.col("PIRL1610").alias("occupational_code_post"),
+            pl.col("PIRL1610").alias("occupation_code_post"),
             pl.col("PIRL1614").alias("industry_code_q1_post"),
             pl.col("PIRL1615").alias("industry_code_q2_post"),
             pl.col("PIRL1616").alias("industry_code_q3_post"),
@@ -87,7 +87,7 @@ NORMALIZATIONS = {
             pl.col("PIRL400").alias("employment_status"),
 
             # Pre-Program Employment
-            pl.col("PIRL403").alias("occupational_code_pre"),
+            pl.col("PIRL403").alias("occupation_code_pre"),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
             pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
@@ -96,7 +96,7 @@ NORMALIZATIONS = {
             pl.col("PIRL1702").alias("wages_1q_pre"),
 
             # Post-Program Employment
-            pl.col("PIRL1610").alias("occupational_code_post"),
+            pl.col("PIRL1610").alias("occupation_code_post"),
             pl.col("PIRL1614").alias("industry_code_q1_post"),
             pl.col("PIRL1615").alias("industry_code_q2_post"),
             pl.col("PIRL1616").alias("industry_code_q3_post"),
@@ -154,7 +154,7 @@ NORMALIZATIONS = {
             pl.col("PIRL400").alias("employment_status"),
 
             # Pre-Program Employment
-            pl.col("PIRL403").alias("occupational_code_pre"),
+            pl.col("PIRL403").alias("occupation_code_pre"),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
             pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
@@ -163,7 +163,7 @@ NORMALIZATIONS = {
             pl.col("PIRL1702").alias("wages_1q_pre"),
 
             # Post-Program Employment
-            pl.col("PIRL1610").alias("occupational_code_post"),
+            pl.col("PIRL1610").alias("occupation_code_post"),
             pl.col("PIRL1614").alias("industry_code_q1_post"),
             pl.col("PIRL1615").alias("industry_code_q2_post"),
             pl.col("PIRL1616").alias("industry_code_q3_post"),
@@ -221,7 +221,7 @@ NORMALIZATIONS = {
             pl.col("PIRL400").alias("employment_status"),
 
             # Pre-Separation Employment
-            pl.col("PIRL403").alias("occupational_code_pre"),
+            pl.col("PIRL403").alias("occupation_code_pre"),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
             pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
@@ -230,7 +230,7 @@ NORMALIZATIONS = {
             pl.col("PIRL1702").alias("wages_1q_pre"),
 
             # Post-Separation Employment
-            pl.col("PIRL1610").alias("occupational_code_post"),
+            pl.col("PIRL1610").alias("occupation_code_post"),
             pl.col("PIRL1614").alias("industry_code_q1_post"),
             pl.col("PIRL1615").alias("industry_code_q2_post"),
             pl.col("PIRL1616").alias("industry_code_q3_post"),
@@ -288,7 +288,7 @@ NORMALIZATIONS = {
             pl.col("PIRL400").alias("employment_status"),
 
             # Pre-Separation Employment
-            pl.col("PIRL403").alias("occupational_code_pre").cast(pl.Int64),
+            pl.col("PIRL403").alias("occupation_code_pre").cast(pl.Int64),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
             pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
@@ -297,7 +297,7 @@ NORMALIZATIONS = {
             pl.col("PIRL1702").alias("wages_1q_pre"),
 
             # Post-Separation Employment
-            pl.col("PIRL1610").alias("occupational_code_post").cast(pl.Int64),
+            pl.col("PIRL1610").alias("occupation_code_post").cast(pl.Int64),
             pl.col("PIRL1614").alias("industry_code_q1_post"),
             pl.col("PIRL1615").alias("industry_code_q2_post"),
             pl.col("PIRL1616").alias("industry_code_q3_post"),
@@ -355,7 +355,7 @@ NORMALIZATIONS = {
             pl.col("PIRL400").alias("employment_status"),
 
             # Pre-Separation Employment
-            pl.col("PIRL403").alias("occupational_code_pre").cast(pl.Int64),
+            pl.col("PIRL403").alias("occupation_code_pre").cast(pl.Int64),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
             pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
@@ -364,7 +364,7 @@ NORMALIZATIONS = {
             pl.col("PIRL1702").alias("wages_1q_pre"),
 
             # Post-Separation Employment
-            pl.col("PIRL1610").alias("occupational_code_post").cast(pl.Int64),
+            pl.col("PIRL1610").alias("occupation_code_post").cast(pl.Int64),
             pl.col("PIRL1614").alias("industry_code_q1_post"),
             pl.col("PIRL1615").alias("industry_code_q2_post"),
             pl.col("PIRL1616").alias("industry_code_q3_post"),
@@ -422,7 +422,7 @@ NORMALIZATIONS = {
             pl.col("PIRL400").alias("employment_status"),
 
             # Pre-Separation Employment
-            pl.col("PIRL403").alias("occupational_code_pre").cast(pl.Int64),
+            pl.col("PIRL403").alias("occupation_code_pre").cast(pl.Int64),
             pl.col("PIRL404").alias("industry_code_q1_pre"),
             pl.col("PIRL405").alias("industry_code_q2_pre"),
             pl.col("PIRL406").alias("industry_code_q3_pre"),
@@ -431,7 +431,7 @@ NORMALIZATIONS = {
             pl.col("PIRL1702").alias("wages_1q_pre"),
 
             # Post-Separation Employment
-            pl.col("PIRL1610").alias("occupational_code_post").cast(pl.Int64),
+            pl.col("PIRL1610").alias("occupation_code_post").cast(pl.Int64),
             pl.col("PIRL1614").alias("industry_code_q1_post"),
             pl.col("PIRL1615").alias("industry_code_q2_post"),
             pl.col("PIRL1616").alias("industry_code_q3_post"),
@@ -489,7 +489,7 @@ NORMALIZATIONS = {
             pl.col("PIRL 400").alias("employment_status"),
 
             # Pre-Separation Employment
-            pl.col("PIRL 403").alias("occupational_code_pre").cast(pl.Int64),
+            pl.col("PIRL 403").alias("occupation_code_pre").cast(pl.Int64),
             pl.col("PIRL 404").alias("industry_code_q1_pre"),
             pl.col("PIRL 405").alias("industry_code_q2_pre"),
             pl.col("PIRL 406").alias("industry_code_q3_pre"),
@@ -498,7 +498,7 @@ NORMALIZATIONS = {
             pl.col("PIRL 1702").alias("wages_1q_pre"),
 
             # Post-Separation Employment
-            pl.col("PIRL 1610").alias("occupational_code_post").cast(pl.Int64),
+            pl.col("PIRL 1610").alias("occupation_code_post").cast(pl.Int64),
             pl.col("PIRL 1614").alias("industry_code_q1_post"),
             pl.col("PIRL 1615").alias("industry_code_q2_post"),
             pl.col("PIRL 1616").alias("industry_code_q3_post"),
@@ -557,7 +557,7 @@ NORMALIZATIONS = {
 
 
             # Pre-Separation Employment
-            pl.col("Item_402").alias("occupational_code_pre").cast(pl.Int64),
+            pl.col("Item_402").alias("occupation_code_pre").cast(pl.Int64),
             pl.col("Item_403").alias("industry_code_q1_pre").cast(pl.Int64),
             pl.col("Item_404").alias("industry_code_q2_pre").cast(pl.Int64),
             pl.col("Item_405").alias("industry_code_q3_pre").cast(pl.Int64),
@@ -566,7 +566,7 @@ NORMALIZATIONS = {
             pl.col("Item_1602").alias("wages_1q_pre").cast(pl.Int64),
 
             # Post-Separation Employment
-            pl.col("Item_1502").alias("occupational_code_post").cast(pl.Int64),
+            pl.col("Item_1502").alias("occupation_code_post").cast(pl.Int64),
             pl.col("Item_1514").alias("industry_code_q1_post").cast(pl.Int64),
             pl.col("Item_1516").alias("industry_code_q2_post").cast(pl.Int64),
             pl.col("Item_1517").alias("industry_code_q3_post").cast(pl.Int64),
@@ -620,7 +620,7 @@ NORMALIZATIONS = {
             pl.col("Item_400").alias("employment_status"),
 
             # Pre-Separation Employment
-            pl.col("Item_402").alias("occupational_code_pre").cast(pl.Int64, strict=False),
+            pl.col("Item_402").alias("occupation_code_pre").cast(pl.Int64, strict=False),
             pl.col("Item_403").alias("industry_code_q1_pre").cast(pl.Int64, strict=False),
             pl.col("Item_404").alias("industry_code_q2_pre").cast(pl.Int64, strict=False),
             pl.col("Item_405").alias("industry_code_q3_pre").cast(pl.Int64, strict=False),
@@ -629,7 +629,7 @@ NORMALIZATIONS = {
             pl.col("Item_1602").alias("wages_1q_pre").cast(pl.Int64, strict=False),
 
             # Post-Separation Employment
-            pl.col("Item_1502").alias("occupational_code_post").cast(pl.Int64, strict=False),
+            pl.col("Item_1502").alias("occupation_code_post").cast(pl.Int64, strict=False),
             pl.col("Item_1514").alias("industry_code_q1_post").cast(pl.Int64, strict=False),
             pl.col("Item_1516").alias("industry_code_q2_post").cast(pl.Int64, strict=False),
             pl.col("Item_1517").alias("industry_code_q3_post").cast(pl.Int64, strict=False),
@@ -683,7 +683,7 @@ NORMALIZATIONS = {
             pl.col("Item_400").alias("employment_status"),
 
             # Pre-Separation Employment
-            pl.col("Item_402").alias("occupational_code_pre").cast(pl.Int64, strict=False),
+            pl.col("Item_402").alias("occupation_code_pre").cast(pl.Int64, strict=False),
             pl.col("Item_403").alias("industry_code_q1_pre").cast(pl.Int64, strict=False),
             pl.col("Item_404").alias("industry_code_q2_pre").cast(pl.Int64, strict=False),
             pl.col("Item_405").alias("industry_code_q3_pre").cast(pl.Int64, strict=False),
@@ -692,7 +692,7 @@ NORMALIZATIONS = {
             pl.col("Item_1602").alias("wages_1q_pre").cast(pl.Int64, strict=False),
 
             # Post-Separation Employment
-            pl.col("Item_1502").alias("occupational_code_post").cast(pl.Int64, strict=False),
+            pl.col("Item_1502").alias("occupation_code_post").cast(pl.Int64, strict=False),
             pl.col("Item_1514").alias("industry_code_q1_post").cast(pl.Int64, strict=False),
             pl.col("Item_1516").alias("industry_code_q2_post").cast(pl.Int64, strict=False),
             pl.col("Item_1517").alias("industry_code_q3_post").cast(pl.Int64, strict=False),
@@ -735,7 +735,7 @@ NORMALIZATIONS = {
     )
 }
 
-DF_CPI = readers.read_parquet("data/processed/consumer_price_index/consumer_price_index.parquet")
+DF_CPI = readers.read_parquet("gs://retrainability-index/processed/consumer_price_index/consumer_price_index.parquet")
 
 def _highest_educational_level_map(value):
     match value:
@@ -776,8 +776,8 @@ def normalize(lf: pl.LazyFrame, year: str) -> pl.LazyFrame:
         pl.col("industry_code_q2_post").cast(pl.String),
         pl.col("industry_code_q3_post").cast(pl.String),
         pl.col("industry_code_q4_post").cast(pl.String),
-        pl.col("occupational_code_pre").cast(pl.String),
-        pl.col("occupational_code_post").cast(pl.String),
+        pl.col("occupation_code_pre").cast(pl.String),
+        pl.col("occupation_code_post").cast(pl.String),
     )
 
     return lf
@@ -832,11 +832,12 @@ def compute_mean_wages(lf: pl.LazyFrame) -> pl.LazyFrame:
     )
 
     lf = lf.with_columns(
-        (pl.col("wages_mean_post") - pl.col("wages_mean_pre"))
-        .alias("wages_mean_diff")
+        pl.col("wages_mean_pre").arcsinh().alias("wages_mean_pre_ihs"),
+        pl.col("wages_mean_post").arcsinh().alias("wages_mean_post_ihs"),
     )
 
     return lf
+
 
 def compute_funding_stream(lf: pl.LazyFrame) -> pl.LazyFrame:
     """ Compute the funding stream based on whether participant received
@@ -941,6 +942,15 @@ def compute_inflation_adjusted_wages(
 
     return lf
 
+def compute_program_duration(lf: pl.LazyFrame) -> pl.LazyFrame:
+    """Compute program duration in days based on entry and exit date."""
+
+    lf = lf.with_columns(
+        (pl.col("exit_date") - pl.col("entry_date")).dt.total_days().alias("program_duration")
+    )
+
+    return lf
+
 def filter(lf: pl.LazyFrame) -> pl.LazyFrame:
 
     lf_filtered = (
@@ -956,7 +966,7 @@ def filter(lf: pl.LazyFrame) -> pl.LazyFrame:
                     # "state",
                     # "entry_date",
                     # "exit_date",
-                    "program_year",
+                    # "program_year",
                     # "wages_mean_post",
                     # "wages_mean_pre",
                     # "wages_mean_diff",

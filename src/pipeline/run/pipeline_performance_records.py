@@ -4,7 +4,7 @@ from pipeline.extract import readers
 from pipeline.transform import performance_records
 from pipeline.load import writers
 
-DATA_PATH = "data/raw/performance_records/"
+DATA_PATH = "gs://retrainability-index/raw/performance_records/"
 DATA_OUTPUT_PATH = "temp/processed/performance_records/"
 
 @task
@@ -12,7 +12,7 @@ def task_performance_records_csv_read(lazy=True) -> dict[str, pl.LazyFrame | pl.
     dict_performance_records = {}
 
     # WIOA Individual Performance Records (Public Use Data)
-    dict_performance_records["2024"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2024Q3_PUBLIC.csv", lazy=lazy)
+    # dict_performance_records["2024"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2024Q3_PUBLIC.csv", lazy=lazy)
     dict_performance_records["2023"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2023Q4_PUBLIC.csv", lazy=lazy)
     dict_performance_records["2022"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2022Q4_Public.csv", lazy=lazy)
     dict_performance_records["2021"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2021Q4_PUBLIC.csv", lazy=lazy)
@@ -42,7 +42,7 @@ def task_performance_records_normalize(dict_lf: dict[str, pl.LazyFrame | pl.Data
     lf = pl.concat(dict_lf_normalized.values())
 
     # Ensure there is only one observation per program year with the same participant id
-    # This will keep the entry in the most recent Performance Records file.abs
+    # This will keep the entry in the most recent Performance Records file.
     # According to WIOA documenation, there should only be 1 unique_id in each program year. 
 
     lf = lf.unique(
@@ -66,6 +66,7 @@ def task_performance_records_compute_additional_columns(lf: pl.LazyFrame | pl.Da
     lf = performance_records.compute_workforce_board_code(lf)
     lf = performance_records.compute_funding_stream(lf)
     lf = performance_records.compute_mean_wages(lf)
+    lf = performance_records.compute_program_duration(lf)
 
     return lf
 
@@ -91,6 +92,21 @@ def task_performance_records_write(lf: pl.LazyFrame | pl.DataFrame) -> pl.DataFr
     writers.write_parquet(df, f"{DATA_OUTPUT_PATH}performance_records.parquet", compression="zstd")
 
     return df
+
+@task
+def task_performance_records_write_bigquery(df: pl.DataFrame) -> None:
+
+    writers.write_bigquery(
+        df,
+        "retraining-index",
+        "staging",
+        "wioa_performance_records",
+        if_exists="replace",
+        sink=True
+    )
+
+    return
+
 
 @task
 def task_performance_records_write_sample(df: pl.DataFrame) -> pl.DataFrame:
@@ -130,20 +146,16 @@ def performance_records_pipeline() -> None:
     dict_performance_records = task_performance_records_csv_read(lazy=True)
     lf_performance_records = task_performance_records_normalize(dict_performance_records)
 
-    lf_count_by_state = task_performance_records_compute_count_by_state(lf_performance_records)
-    df_count_by_state = task_performance_records_write_count_by_state(lf_count_by_state)
+    # lf_count_by_state = task_performance_records_compute_count_by_state(lf_performance_records)
+    # df_count_by_state = task_performance_records_write_count_by_state(lf_count_by_state)
 
     lf_performance_records = task_compute_inflation_adjusted_wages(lf_performance_records)
     lf_performance_records = task_performance_records_compute_additional_columns(lf_performance_records)
-
-    lf_performance_records = task_performance_records_filter(lf_performance_records)
-    df = task_performance_records_write(lf_performance_records)
-    df_sample = task_performance_records_write_sample(df)
     
-    print("df.columns:", df.columns)
-    print("df: ", df.select(pl.len()).item())
-    print("df_sample: ", df_sample.select(pl.len()).item())
+    lf_performance_records = task_performance_records_filter(lf_performance_records)
 
+    task_performance_records_write_bigquery(lf_performance_records)
+    
     return 
 
 if __name__ == "__main__":

@@ -4,12 +4,10 @@ from prefect import get_run_logger
 from pipeline.extract import readers
 
 def _read_industries_parquet() -> pl.DataFrame:
-    df = readers.read_parquet("data/processed/industries/industries.parquet")
-    return df
+    return readers.read_parquet("gs://retrainability-index/processed/industries/industries.parquet")
 
 def _read_occupations_parquet() -> pl.DataFrame:
-    df = pl.read_parquet("data/processed/occupations/occupations.parquet")
-    return df
+    return readers.read_parquet("gs://retrainability-index/processed/occupations/occupations.parquet")
 
 def normalize(df: pl.DataFrame) -> pl.DataFrame:
 

@@ -157,9 +157,12 @@ NAMES_TO_DCIDS_OVERRIDE = {
     'County Of Charles City, Virginia': ["geoId/51036"]
 }
 
+DATA_PATH = "gs://retrainability-index/raw/workforce_development_board_codes/"
+
+
 def _read_county_diversity_index() -> pl.DataFrame:
 
-    df = read_excel("data/raw/workforce_development_board_codes/county_diversity_index.xlsx", engine="xlsx2csv")
+    df = read_excel(f"{DATA_PATH}county_diversity_index.xlsx", engine="xlsx2csv")
 
     df = df.select(
         pl.format(
@@ -173,7 +176,7 @@ def _read_county_diversity_index() -> pl.DataFrame:
 
 def _read_county_household_debt() -> pl.DataFrame:
 
-    df = read_csv("data/raw/workforce_development_board_codes/county_household_debt.csv")
+    df = read_csv(f"{DATA_PATH}county_household_debt.csv")
 
     df = df.group_by(
         ["year", "area_fips"]
@@ -193,7 +196,7 @@ def _read_county_household_debt() -> pl.DataFrame:
     return df
 
 def _read_county_average_commute_time() -> pl.DataFrame:
-    df = read_parquet("data/raw/workforce_development_board_codes/county_average_commute_time.parquet")
+    df = read_parquet(f"{DATA_PATH}county_average_commute_time.parquet")
 
     df = df.select(
         pl.format(
@@ -206,7 +209,7 @@ def _read_county_average_commute_time() -> pl.DataFrame:
     return df
 
 def _read_county_rural_urban_continuum_codes() -> pl.DataFrame:
-    df = read_excel("data/raw/workforce_development_board_codes/county_rural_urban_continuum_codes_2023.xlsx", engine="xlsx2csv")
+    df = read_excel(f"{DATA_PATH}county_rural_urban_continuum_codes_2023.xlsx", engine="xlsx2csv")
 
     df = df.select(
         pl.format(
@@ -324,13 +327,13 @@ def join_with_datacommons_variables(df: pl.DataFrame, names_to_dcids_override: d
             df_rucc, on=["dcid"], how="left"
         )
         .group_by([
-            "program_year", 
-            "state", 
-            "workforce_board_code", 
+            "program_year",
+            "state",
+            "workforce_board_code",
             "jurisdiction",
             "jurisdiction_state"
         ]).agg(
-            pl.col("dcid"),
+            pl.col("dcid").drop_nulls(),
             pl.col("land_area_sqm").sum(),
             pl.col("population").sum(),
             pl.col("median_age").mean(),
