@@ -206,7 +206,7 @@ def compute_index(
     post_cols = ["wages_mean_post_ihs", "r_cog_subsector_post", "r_man_subsector_post", "r_cog_post", "r_man_post"]
     norm_pre  = ["wages_mean_pre_ihs_normalized", "r_cog_subsector_pre_normalized", "r_man_subsector_pre_normalized", "r_cog_pre_normalized", "r_man_pre_normalized"]
     norm_post = ["wages_mean_post_ihs_normalized", "r_cog_subsector_post_normalized", "r_man_subsector_post_normalized", "r_cog_post_normalized", "r_man_post_normalized"]
-    diff_cols = ["wages_mean_ihs_normalized_diff", "r_cog_subsctor_normalized_diff", "r_man_subsctor_normalized_diff", "r_cog_normalized_diff", "r_man_normalized_diff"]
+    diff_cols = ["wages_mean_ihs_normalized_diff", "r_cog_subsector_normalized_diff", "r_man_subsector_normalized_diff", "r_cog_normalized_diff", "r_man_normalized_diff"]
 
     for pre_c, post_c, out_pre, out_post in zip(pre_cols, post_cols, norm_pre, norm_post):
         df = _winsorize_and_normalize_pair(df, pre_c, post_c, out_pre, out_post)
@@ -224,8 +224,8 @@ def compute_index(
         ).alias("index"),
         (
             0.5  * pl.col("wages_mean_ihs_normalized_diff")
-            - 0.25 * pl.col("r_cog_subsctor_normalized_diff")
-            - 0.25 * pl.col("r_man_subsctor_normalized_diff")
+            - 0.25 * pl.col("r_cog_subsector_normalized_diff")
+            - 0.25 * pl.col("r_man_subsector_normalized_diff")
         ).alias("index_subsector"),
     )
 

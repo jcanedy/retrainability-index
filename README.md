@@ -36,6 +36,25 @@ index_subsector = 0.5 × wages_diff - 0.25 × r_cog_subsector_diff - 0.25 × r_m
 
 Wages are IHS-transformed (`wages_mean_pre_ihs`, `wages_mean_post_ihs`) prior to winsorization. A positive index score indicates wage growth into less automatable work; a negative score indicates the reverse.
 
+### Inverse Probability Weighting
+
+The index can only be calculated for participants with valid pre- and post-program occupation codes (matching RTI data) and wage data. This calculable subsample may differ systematically from the full WIOA sample — for example, participants who change occupations may differ demographically from those who don't. Inverse probability weighting (IPW) reweights the calculable subsample so that aggregate statistics on `index` represent the full program population.
+
+A logistic regression is fit to predict `is_calculable = (index IS NOT NULL)` from participant covariates (demographics, program type, state, program year, and workforce board). Two weight variants are produced:
+
+- **`ipw_simple`**: `1 / P(calculable | X)` — the naive estimator
+- **`ipw_stabilized`**: `P(calculable) / P(calculable | X)` — lower variance; weights center near 1.0
+
+Both are trimmed at the 99th percentile of calculable-row weights and set to NULL for non-calculable rows. `propensity_score` (the raw model output `P(calculable | X)`) is stored alongside the weights.
+
+`workforce_board_code` (641 levels) is encoded via `TargetEncoder` rather than one-hot encoding to avoid dimensionality explosion and perfect separation on rare boards.
+
+Three diagnostic metrics are computed after each run:
+
+- **Standardized Mean Differences (SMD)**: per covariate before and after weighting. `|SMD| < 0.1` is the standard adequacy threshold.
+- **Effective Sample Size (ESS)**: `(Σw)² / Σw²` — how much effective sample is retained after weighting.
+- **Overlap**: the propensity score distribution for calculable vs. non-calculable records, used to check that the two groups share common support.
+
 ## Architecture
 
 Raw data is stored in **GCS** (`gs://retrainability-index/`) and processed into **BigQuery** (`retraining-index.staging.*`). Pipelines are orchestrated with **Prefect**.
@@ -50,8 +69,12 @@ pipeline_performance_records   ──┤
                                  │
 pipeline_occupations           ──┐
 pipeline_routine_task_intensity ─┤──► pipeline_retrainability_index ──► staging.wioa_retrainability_index
-pipeline_performance_records   ──┤
-pipeline_workforce_development_boards ──┘
+pipeline_performance_records   ──┤                                               │
+pipeline_workforce_development_boards ──┘                                        │
+                                                                                 ▼
+                                                                  pipeline_ipw_weights ──► staging.wioa_ipw_weights
+                                                                                      ──► staging.wioa_ipw_diagnostics_smd
+                                                                                      ──► staging.wioa_ipw_diagnostics_ess
 ```
 
 ### BigQuery Output Tables (`retraining-index.staging`)
@@ -67,6 +90,9 @@ pipeline_workforce_development_boards ──┘
 | `consumer_price_index` | CPI by year for inflation adjustment |
 | `workforce_boards` / `workforce_boards_grouped` / `workforce_boards_all` | Workforce board jurisdictions with geographic/demographic variables |
 | `wioa_retrainability_index` | Final index output joined with all upstream data |
+| `wioa_ipw_weights` | IPW weights (`ipw_simple`, `ipw_stabilized`, `propensity_score`) keyed by `unique_id` + `program_year` |
+| `wioa_ipw_diagnostics_smd` | Standardized mean differences before/after weighting, per covariate level |
+| `wioa_ipw_diagnostics_ess` | Effective sample size and calculable subsample summary |
 
 ## Installation
 
@@ -90,5 +116,8 @@ python src/pipeline/run/pipeline_routine_task_intensity.py
 python src/pipeline/run/pipeline_workforce_development_boards.py
 
 # Downstream (requires all upstream tables)
-python src/pipeline/run/pipeline_retrainability_index.py
+uv run python src/pipeline/run/pipeline_retrainability_index.py
+
+# IPW weights + diagnostics (requires wioa_retrainability_index)
+uv run python src/pipeline/run/pipeline_ipw_weights.py
 ```
