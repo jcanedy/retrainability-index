@@ -10,7 +10,10 @@ DATASET = "staging"
 
 @task
 def task_ipw_read() -> pl.DataFrame:
-    return readers.read_bigquery(PROJECT, DATASET, table="wioa_retrainability_index")
+    return readers.read_bigquery(
+        PROJECT, DATASET, table="",
+        query=f"SELECT * FROM `{PROJECT}.{DATASET}.wioa_retrainability_index` WHERE program_year < 2024"
+    )
 
 
 @task
