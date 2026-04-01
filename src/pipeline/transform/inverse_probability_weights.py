@@ -7,11 +7,12 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
 
-_CAT_COLS    = ["sex", "race", "funding_stream", "state", "program_year",
+_CAT_COLS    = ["sex", "race", "funding_stream", "program_year",
                 "highest_educational_level", "employment_status"]
 _NUM_COLS    = ["age"]
 _BOOL_COLS   = ["low_income_status", "received_training"]
-_TARGET_COLS = ["workforce_board_code"]
+_TARGET_COLS = []  # state and workforce_board_code excluded — calculable rate variation is driven
+                   # by geographic reporting infrastructure, not individual selection
 
 
 def compute_ipw(
