@@ -12,7 +12,7 @@ def task_performance_records_csv_read(lazy=True) -> dict[str, pl.LazyFrame | pl.
     dict_performance_records = {}
 
     # WIOA Individual Performance Records (Public Use Data)
-    # dict_performance_records["2024"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2024Q3_PUBLIC.csv", lazy=lazy)
+    dict_performance_records["2024"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2024Q3_PUBLIC.csv", lazy=lazy)
     dict_performance_records["2023"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2023Q4_PUBLIC.csv", lazy=lazy)
     dict_performance_records["2022"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2022Q4_Public.csv", lazy=lazy)
     dict_performance_records["2021"] = readers.read_csv(f"{DATA_PATH}WIOAPerformanceRecords_PY2021Q4_PUBLIC.csv", lazy=lazy)
@@ -46,7 +46,8 @@ def task_performance_records_normalize(dict_lf: dict[str, pl.LazyFrame | pl.Data
     # According to WIOA documenation, there should only be 1 unique_id in each program year. 
 
     lf = lf.unique(
-        subset=["unique_id", "program_year"]
+        subset=["unique_id", "program_year"],
+        keep="first"
     )
     
     return lf
